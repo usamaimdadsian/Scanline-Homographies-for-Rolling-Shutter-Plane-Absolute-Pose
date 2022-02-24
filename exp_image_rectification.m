@@ -23,11 +23,8 @@ data_options = [11, 12 13, 14, 15,    21, 22, 23, 24,     31, 32,     41, 42, 43
 data_names = {'ours', 'LiU', 'Univ'};
 
 %data_options = [11, 12 13, 14, 15,    21, 22, 23, 24,     31, 32,     41, 42, 43]
-data_options = [31, 32,     42, 43]
-
-% data_options = 41;
-
-data_options = [41, 43];
+data_options = [31, 32,     42,    41, 43]
+%data_options = [41, 43];
 
 for dtc = data_options
 
@@ -117,56 +114,14 @@ keypoints_template = readmatrix([template_name, '.txt'])';
 image_rollingshutter = imread([rollingshutter_name, '.png']);
 image_template = imread([template_name, '.png']);
 
-CalibrationTemplate = readmatrix([calibration_name, '.txt']);
-CalibrationRollingshutter =  readmatrix([calibration_name, '.txt']);
+calibration_template = readmatrix([calibration_name, '.txt']);
+calibration_rollingshutter =  readmatrix([calibration_name, '.txt']);
 
 
+% solve Image rectification problem
+RSPAPP = RollingShutterPlaneAbsolutePoseProblem;
+rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter);
 
-if (true)
-    
-    [rs_y_size, rs_x_size, rs_channels] = size(image_rollingshutter);
-    
-    hg_rollingshutter = [keypoints_rollingshutter;  ones(1, size(keypoints_rollingshutter, 2))];
-    hg_template = [keypoints_template;   ones(1, size(keypoints_template, 2))];
-    
-    hg_rollingshutter = inv(CalibrationRollingshutter) * hg_rollingshutter;
-    hg_template = inv(CalibrationTemplate) * hg_template;
-    
-    normalized_keypoints_rollingshutter = hg_rollingshutter([1,2], :) ./ hg_rollingshutter(3, :);
-    normalized_keypoints_template = hg_template([1,2], :) ./ hg_template(3, :);
-    
-    % normalize y-coordinates for each scanline
-    yvalues = 1 : rs_y_size;
-    hg_all_tests = [zeros(1, rs_y_size);   yvalues;  ones(1, rs_y_size)];
-    hg_all_tests = inv(CalibrationRollingshutter)  * hg_all_tests;
-    yvalues = hg_all_tests(2, :) ./ hg_all_tests(3, :);
-    
-    
-    % calculate plane-homographies in the normalized corrdinates
-    JEstimate = ScanlineHomographyEstimation(normalized_keypoints_rollingshutter, normalized_keypoints_template);
-    scanlineHomographies = JEstimate.GetScanlineHomography(yvalues);
-    [poses, plane_homographies] = FundamentalHomographyEquation.GetScanlinePoses (yvalues, scanlineHomographies, 100,  'image');
-
-%     for ii = 1 : length(poses); Pose = poses{ii}, end
-%     for ii = 1 : length(plane_homographies);  H = plane_homographies{ii}, end
-    
-    % recalculate the un-normalized plane-homography from Euclidean plane-homographies
-    for ii = 1 : length(plane_homographies)
-        EuclideanH = plane_homographies{ii};
-        plane_homographies{ii} = CalibrationRollingshutter * EuclideanH * inv(CalibrationTemplate);
-    end
-
-    
-    % use the median points of all correspondences as anchor
-    anchor_idx = round(median(keypoints_rollingshutter(2, :)));
-    rectified_img = ImageRectification.rectifyRSImage (image_rollingshutter, plane_homographies, anchor_idx);
-    
-    
-end
-
-% rs_img = uint8(rs_img);
-% tempt = uint8(tempt);
-% rectified_img = uint8(rectified_img);
 
 
 
@@ -184,8 +139,12 @@ fontSize2 = 8;
 
 
 
+
 figure('Name', 'Scanline Homography', 'Position', [0, 1200, 550, 200]);
 tfig = tiledlayout(1, 2, 'TileSpacing','Loose');
+
+scanlineHomographies = RSPAPP.output_scanlineHomographies;
+yvalues = RSPAPP.ouput_yvalues;
 
 ax1 = nexttile;
 Curve6 = zeros(6, length(scanlineHomographies));
@@ -232,7 +191,8 @@ exportgraphics(tfig, [paper_figure_dir, dataName, '_Jy_estimated_curve.pdf'], 'C
 
 
 figure('Name', 'Key Points Matching', 'Position', [0, 500, 500, 400]);
-template_Jxpts = JEstimate.WarpRS2Template(normalized_keypoints_rollingshutter);
+normalized_keypoints_template = RSPAPP.output_template_pts;
+template_Jxpts = RSPAPP.output_template_Jxpts;
 scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
 scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
 dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');

@@ -14,13 +14,13 @@
 
 classdef BSpline
     
-    %%% By definition:   spline_order (k) = polynomial_order (p) + 1
+    %%% By definition:   spline_order (k) = polynomial_degree (p) + 1
     %%%                            num_knots (m+1)
     %%%                            num_control_points (n+1)
     %%%
     %%% A basic relation:  m = n + p + 1,   or equivalently  m = n + k
     %%%
-    %%% num_knots (m+1) = num_control_points (n+1) + polynomial_order (p) + 1
+    %%% num_knots (m+1) = num_control_points (n+1) + polynomial_degree (p) + 1
     %%% num_knots (m+1) = num_control_points (n+1) + spline_order (k)
     
     %%% Clamped B-Spline
@@ -29,19 +29,7 @@ classdef BSpline
     
     methods (Access = public, Static = true)
         
-        function NBasisVec = GetSplineBasisVector(query_t, knot_vector, polynomial_order_p)
-            % this use a cubic polynomial
-            if (1)
-                x = query_t;
-                num_control_points = length(knot_vector) - polynomial_order_p - 1;
-                NBasisVec = 1;
-                for ii = 2 : num_control_points
-                    NBasisVec =[NBasisVec, NBasisVec(end)*x];
-                end
-                return;
-            end
-            
-            
+        function NBasisVec = GetSplineBasisVector(query_t, knot_vector, polynomial_degree_p)            
             num_knots = length(knot_vector);
             % initialize the basis vector, for order 0
             NBasisVec = zeros(1, num_knots-1); idx = 0;
@@ -58,7 +46,7 @@ classdef BSpline
             % Cox-de Boor recursion formula
             % recursive construction, for k = 1, ... order_k
             % NtmpVec ---> NkVec
-            for p = 1 : polynomial_order_p
+            for p = 1 : polynomial_degree_p
                 NtmpVec = zeros(1, length(NBasisVec)-1);
                 for ii = 1 : (length(NBasisVec)-1)
                     Nc1 = NBasisVec(ii);
@@ -87,7 +75,7 @@ classdef BSpline
             end            
             % verifiy the construction
             if (1)
-                correctness = BSpline.CheckBasisFunctions (NBasisVec, polynomial_order_p, idx);
+                correctness = BSpline.CheckBasisFunctions (NBasisVec, polynomial_degree_p, idx);
                 if (~correctness)
                     fprintf(2, 'fatal error@BSpline.\n'); return;
                 end
@@ -95,14 +83,14 @@ classdef BSpline
         end
 
         
-        function knot_positions = create_knot_positions(param_range, polynomial_order, num_control_points)
+        function knot_positions = create_knot_positions(param_range, polynomial_degree_p, num_control_points)
             
-            %%% num_knots (m+1) = num_control_points (n+1) + polynomial_order (p) + 1
-            num_knots = num_control_points+polynomial_order+1;
+            %%% num_knots (m+1) = num_control_points (n+1) + polynomial_degree (p) + 1
+            num_knots = num_control_points+polynomial_degree_p+1;
             
             %%% Clamped B-Spline
              %%% The first k=p+1 knots must be at the same position. So must be the last k=p+1 knots                        
-            k = polynomial_order+1;
+            k = polynomial_degree_p+1;
             
             % interpolation range
             inter_lower_limit = min(param_range); 
@@ -137,13 +125,13 @@ classdef BSpline
     
     methods (Access = private, Static = true)
         
-        function correctness =  CheckBasisFunctions (NBasisVec, polynomial_order_p, query_idx)
+        function correctness =  CheckBasisFunctions (NBasisVec, polynomial_degree_p, query_idx)
             correctness = false;
             if abs(sum(NBasisVec) - 1) > 1e-14
                 fprintf(2, 'fatal error@BSpline. @CheckBasisFunctions. << Partition of Unity. sum(NBasisVec) = 1 >> is violated!\n'); return;
             end
-            if sum(NBasisVec((query_idx-polynomial_order_p) : query_idx) > 0) ~= (polynomial_order_p+1)
-                fprintf(2, 'fatal error@BSpline. @CheckBasisFunctions. << NBasisVec[(query_idx-polynomial_order_p) : query_idx] > 0 >> is violated!\n'); return;
+            if sum(NBasisVec((query_idx-polynomial_degree_p) : query_idx) > 0) ~= (polynomial_degree_p+1)
+                fprintf(2, 'fatal error@BSpline. @CheckBasisFunctions. << NBasisVec[(query_idx-polynomial_degree_p) : query_idx] > 0 >> is violated!\n'); return;
             end
             correctness = true;
         end
