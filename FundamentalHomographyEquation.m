@@ -23,7 +23,7 @@ classdef FundamentalHomographyEquation
                 iters =  100;
             end
             if ~exist('template_type', 'var') || (exist('template_type', 'var') && isempty(template_type))
-                template_flag = 1;  % the template is a Euclidean object
+                template_flag = 2;  % the default template is a global-shutter image
             else
                 switch template_type
                     case 'object'                        

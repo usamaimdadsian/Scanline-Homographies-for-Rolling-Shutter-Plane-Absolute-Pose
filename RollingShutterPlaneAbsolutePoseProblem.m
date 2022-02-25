@@ -33,7 +33,10 @@ classdef RollingShutterPlaneAbsolutePoseProblem < handle
     methods (Access = public)
         
         
-        function [rectified_img,  poses] = SolveImageRectification (this, keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter)
+        function [rectified_img,  poses] = SolveImageRectification (this, keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter, template_type)
+            if ~exist('template_type', 'var') || (exist('template_type', 'var') && isempty(template_type))
+                template_type = 'image';    %% image = global-shutter-image,     object = Euclidean object
+            end
 
             hg_rollingshutter = [keypoints_rollingshutter;  ones(1, size(keypoints_rollingshutter, 2))];
             hg_template = [keypoints_template;   ones(1, size(keypoints_template, 2))];
@@ -70,7 +73,7 @@ classdef RollingShutterPlaneAbsolutePoseProblem < handle
                 yvalues = hg_all_tests(2, :) ./ hg_all_tests(3, :);
                 
                 scanlineHomographies = JEstimate.GetScanlineHomography(yvalues);
-                [poses, plane_homographies] = FundamentalHomographyEquation.GetScanlinePoses (yvalues, scanlineHomographies, 100,  'image');
+                [poses, plane_homographies] = FundamentalHomographyEquation.GetScanlinePoses (yvalues, scanlineHomographies, 100,  template_type);
             
                 % recalculate the un-normalized plane-homography from Euclidean plane-homographies
                 for ii = 1 : length(plane_homographies)

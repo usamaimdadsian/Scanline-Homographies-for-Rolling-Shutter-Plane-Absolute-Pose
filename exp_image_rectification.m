@@ -2,29 +2,72 @@ clear all
 close all
 clc
 
-% this is the destination directory to contain figures for the paper
-paper_figure_dir = '../PaperDraft/figure/';
-
 
 size_of_final_image = [NaN, 400];
 
+
 fdir = '../CVPR_dataset/';
+% the list of datasets
+%data_options = [11, 12, 13, 14, 15,    21, 22, 23, 24,     31, 32,     41, 42, 43]
+data_options = [31, 32,     41, 42, 43]
 
 
-
+% this is the destination directory to contain figures for the paper
+paper_figure_dir = '../PaperDraft/figure/';
 if ~exist(paper_figure_dir, 'dir')
        mkdir(paper_figure_dir);
 end
 
-% the dirctory for the image file
-%image_file = 'data_RS_for_Fang/LiU/frame02.png';
 
-data_options = [11, 12 13, 14, 15,    21, 22, 23, 24,     31, 32,     41, 42, 43]
-data_names = {'ours', 'LiU', 'Univ'};
 
-%data_options = [11, 12 13, 14, 15,    21, 22, 23, 24,     31, 32,     41, 42, 43]
-data_options = [31, 32,     42,    41, 43]
-%data_options = [41, 43];
+params(1).param_paramterization_type = 'Polynomial';
+params(1).param_polynomial_degree = [1, 1, 1, 1, 1];
+params(1).param_num_control_points = [];
+
+params(2).param_paramterization_type = 'Polynomial';
+params(2).param_polynomial_degree = [1, 1, 1, 2, 2];
+params(2).param_num_control_points = [];
+
+params(3).param_paramterization_type = 'Polynomial';
+params(3).param_polynomial_degree = [2, 2, 2, 2, 2];
+params(3).param_num_control_points = [];
+
+params(4).param_paramterization_type = 'Polynomial';
+params(4).param_polynomial_degree = [2, 2, 2, 3, 3];
+params(4).param_num_control_points = [];
+
+params(5).param_paramterization_type = 'Polynomial';
+params(5).param_polynomial_degree = [3, 3, 3, 3, 3];
+params(5).param_num_control_points = [];
+
+params(6).param_paramterization_type = 'BSpline';
+params(6).param_polynomial_degree = [1, 1, 1, 1, 1];
+params(6).param_num_control_points = [3, 3, 3, 3, 3];
+
+params(7).param_paramterization_type = 'BSpline';
+params(7).param_polynomial_degree = [1, 1, 1, 2, 2];
+params(7).param_num_control_points = [3, 3, 3, 4, 4];
+
+params(8).param_paramterization_type = 'BSpline';
+params(8).param_polynomial_degree = [2, 2, 2, 2, 2];
+params(8).param_num_control_points = [4, 4, 4, 4, 4];
+
+params(9).param_paramterization_type = 'BSpline';
+params(9).param_polynomial_degree = [2, 2, 2, 3, 3];
+params(9).param_num_control_points = [4, 4, 4, 5, 5];
+
+params(10).param_paramterization_type = 'BSpline';
+params(10).param_polynomial_degree = [3, 3, 3, 3, 3];
+params(10).param_num_control_points = [5, 5, 5, 5, 5];
+
+
+
+for pcnt = 1 : length(params)
+
+param_paramterization_type = params(pcnt).param_paramterization_type;    
+param_polynomial_degree = params(pcnt).param_polynomial_degree;
+param_num_control_points = params(pcnt).param_num_control_points;
+
 
 for dtc = data_options
 
@@ -120,8 +163,12 @@ calibration_rollingshutter =  readmatrix([calibration_name, '.txt']);
 
 % solve Image rectification problem
 RSPAPP = RollingShutterPlaneAbsolutePoseProblem;
-rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter);
 
+RSPAPP.param_paramterization_type = param_paramterization_type;
+RSPAPP.param_polynomial_degree = param_polynomial_degree;
+RSPAPP.param_num_control_points = param_num_control_points;
+
+rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter);
 
 
 
@@ -131,12 +178,37 @@ rectified_img = imresize(rectified_img, size_of_final_image);
 
 close all;
 
-
+fontSize2 = 8;
 
 dataName = ['image_', num2str(dtc)];
 
-fontSize2 = 8;
 
+
+pstr = [];
+for k = 1 : length(RSPAPP.param_polynomial_degree)
+    pstr = [pstr, num2str(RSPAPP.param_polynomial_degree(k))];
+end
+cstr = [];
+for k = 1 : length(RSPAPP.param_num_control_points)
+    cstr = [cstr, num2str(RSPAPP.param_num_control_points(k))];
+end
+if strcmp(RSPAPP.param_paramterization_type, 'Polynomial')
+    append_info = ['polynomial_p', pstr];
+end
+if strcmp(RSPAPP.param_paramterization_type, 'BSpline')
+    append_info = ['bspline_p', pstr, '_c', cstr];
+end
+
+
+
+figure('Name', 'Key Points Matching', 'Position', [0, 500, 500, 400]);
+normalized_keypoints_template = RSPAPP.output_template_pts;
+template_Jxpts = RSPAPP.output_template_Jxpts;
+scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
+scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
+dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');
+title(sprintf('RMSE = %f',  sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2))));
+xlabel('x'); ylabel('y');    
 
 
 
@@ -190,15 +262,6 @@ lgd.Layout.Tile = 'South';
 exportgraphics(tfig, [paper_figure_dir, dataName, '_Jy_estimated_curve.pdf'], 'ContentType', 'Vector');
 
 
-figure('Name', 'Key Points Matching', 'Position', [0, 500, 500, 400]);
-normalized_keypoints_template = RSPAPP.output_template_pts;
-template_Jxpts = RSPAPP.output_template_Jxpts;
-scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
-scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
-dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');
-title(sprintf('RMSE = %f',  sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2))));
-xlabel('x'); ylabel('y');    
-
 
 figure('Name', 'RS Image', 'Position', [700, 500, 500, 400]);
 imshow(image_rollingshutter);
@@ -213,13 +276,11 @@ imwrite(image_template, [paper_figure_dir, dataName, '_template.png']);
 figure('Name', 'rectified Image',  'Position', [700, 0, 500, 400]);
 imshow(rectified_img);
 
-imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img.png']);
+imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
 
-
-pause(2)
+pause(1.5)
 
 end
 
 
-
-
+end
