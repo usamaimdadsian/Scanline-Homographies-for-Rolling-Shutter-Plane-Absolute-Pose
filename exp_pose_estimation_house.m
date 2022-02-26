@@ -16,9 +16,9 @@ data_choice = data_options(1);
 data_dir = [fdir, subdir{data_choice}];
 
 %template_image = 'gt_start_frame01_template.png';
-%template_image = 'gt_start_frame09_template.png'
 %gs_template_image = imread(template_image);
 
+save_param_option = 2;
 
 
 
@@ -79,8 +79,9 @@ RMSE_pos_arr = [];
 exp_curve_names = {};
 
 
-for pcnt = [1, 2, 3, 4, 6, 7, 8, 9]
-
+%for pcnt = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+for pcnt = [2]
+    
 param_paramterization_type = params(pcnt).param_paramterization_type;    
 param_polynomial_degree = params(pcnt).param_polynomial_degree;
 param_num_control_points = params(pcnt).param_num_control_points;
@@ -98,7 +99,7 @@ if strcmp(param_paramterization_type, 'Polynomial')
     append_info = ['p', pstr];
 end
 if strcmp(param_paramterization_type, 'BSpline')
-    append_info = ['p', pstr, '_c', cstr];
+    append_info = ['p', pstr, '\_c', cstr];
 end
 exp_curve_names = [exp_curve_names,  append_info];
 
@@ -148,44 +149,106 @@ for ii = 1 : length(frame_names)
     end
     
     
-    [RMSE_rot, RMSE_pos] = TrajectoryError.AbsoluteTrajectoryErrorByFirst (poses, gt_poses);
+    [RMSE_rot, RMSE_pos] = TrajectoryError.RelativePoseError (poses, gt_poses);
     RMSE_rot_arr(end, ii) = RMSE_rot;
     RMSE_pos_arr(end, ii) = RMSE_pos;
     
     
-    figure('Name', append_info, 'Position', [0, 800, 1600, 600]);
+    figure('Name', 'Key Points Matching', 'Position', [0, 800, 500, 400]);
+    normalized_keypoints_template = RSPAPP.output_template_pts;
+    template_Jxpts = RSPAPP.output_template_Jxpts;
+    scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
+    scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
+    dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');
+    title(sprintf('RMSE = %f',  sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2))));
+    xlabel('x'); ylabel('y');
+    title(filename);
+    
+    
+    figure('Name', append_info, 'Position', [0, 0, 1600, 600]);
     tfig = tiledlayout(1, 2, 'TileSpacing', 'tight');
     ax1 = nexttile;
-    imshow(image_rollingshutter);
+    imshow(image_rollingshutter); 
+    hold on;
+    scatter(keypoints_rollingshutter(1, :), keypoints_rollingshutter(2, :), '.', 'r');
+    hold off;
     ax2 = nexttile;
-    imshow(rectified_img);    
-    pause(1)
+    imshow(rectified_img);
+    title(tfig, filename);
     
     
+    if sum(pcnt == save_param_option)
+        
+        size_of_final_image = [NaN, 350];
+        
+        if ~isnan(size_of_final_image(1))
+            scale_r = size_of_final_image(1)/size(image_rollingshutter, 1);
+        end
+        if ~isnan(size_of_final_image(2))
+            scale_r = size_of_final_image(2)/size(image_rollingshutter, 2);
+        end
+        
+        image_rollingshutter = imresize(image_rollingshutter, size_of_final_image);
+        rectified_img = imresize(rectified_img, size_of_final_image);
+
+        dataName = ['House_', filename];
+        
+        rsfig = figure('Name', 'RS Image');
+        imshow(image_rollingshutter);
+        hold on;
+        scatter(scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'r');
+        hold off;
+        exportgraphics(rsfig, [paper_figure_dir, dataName, '_rs_img.pdf'], 'ContentType', 'vector');
+        % imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
+                
+        figure('Name', 'rectified Image');
+        imshow(rectified_img);
+        imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
+        
+    end
+    
+    pause(0.5);
+    
 end
-
-
-end
-
 
 close all;
 
+end
+
+
+return;
+
 fontSize2 = 8;
 
-figure('Name', 'Image rectification', 'Position', [0, 800, 1200, 400]);
+figure('Name', 'Image rectification', 'Position', [0, 800, 1300, 400]);
 tfig = tiledlayout(1, 2, 'TileSpacing', 'compact');
 
+linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
+linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
+linecolor = {'#FF0000', '#00FF00', 	'#0000FF', 	'#00FFFF', 	'#FF00FF', ...
+                      '#FF0000', '#00FF00',  '#0000FF',  '#00FFFF',  '#FF00FF'};
+
+
 ax1 = nexttile;
-plot(RMSE_rot_arr', '.-', 'LineWidth', 1.5);
-grid on;
+hold on;
+for ii = 1 : size(RMSE_rot_arr, 1)
+plot(RMSE_rot_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
+end
+hold off; grid on;
 ylabel(ax1, 'Rotation RMSE');
-% xticks(1:12);
+ax1.XLim(1) = 1;
+set(gca, 'YScale', 'log');
+
 
 ax2 = nexttile;
-plot(RMSE_pos_arr', '.-', 'LineWidth', 1.5);
-grid on;
+hold on;
+for ii = 1 : size(RMSE_pos_arr, 1)
+plot(RMSE_pos_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
+end
+hold off; grid on;
 ylabel(ax2, 'Translation RMSE');
-% xticks(1:12);
+ax2.XLim(1) = 1;
+set(gca, 'YScale', 'log');
 
 lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off');
 lgd.Layout.Tile = 'South';

@@ -8,7 +8,7 @@ classdef TrajectoryError
                 GaugeT = eye(4);
             end
             
-            nsize = length(PoseArrayGauge);
+            nsize = length(poseArray1);
             
             pose = PoseArrayGauge{1};
             if (size(pose, 1) == size(pose, 2))
@@ -64,7 +64,7 @@ classdef TrajectoryError
         
         function [RMSE_rot, RMSE_pos] = AbsoluteTrajectoryErrorByFirst (poseArray1, PoseArrayGauge)
                         
-            nsize = length(PoseArrayGauge);
+            nsize = length(poseArray1);
             
             pose = PoseArrayGauge{1};
             if (size(pose, 1) == size(pose, 2))
@@ -124,6 +124,70 @@ classdef TrajectoryError
         end        
         
         
+        
+        
+        function [RMSE_rot, RMSE_pos] = RelativePoseError (poseArray1, PoseArrayGauge)
+            
+            nsize = length(poseArray1);
+            
+            pose = PoseArrayGauge{1};
+            if (size(pose, 1) == size(pose, 2))
+                ndim = size(pose, 1) - 1;
+            end
+            if (size(pose, 1) + 1 == size(pose, 2))
+                ndim = size(pose, 1);
+            end
+                        
+                        
+            rotation_diff = [];
+            position_diff = [];
+            
+            
+            cnt = 1;
+            
+            R0 = poseArray1{cnt}(1:ndim, 1:ndim);
+            t0 = poseArray1{cnt}(1:ndim, 1+ndim);
+            
+            gauge_R0 = PoseArrayGauge{cnt}(1:ndim, 1:ndim);
+            gauge_t0 = PoseArrayGauge{cnt}(1:ndim, 1+ndim);
+            
+            
+            for cnt = 2 : nsize
+                
+                R = poseArray1{cnt}(1:ndim, 1:ndim);
+                t = poseArray1{cnt}(1:ndim, 1+ndim);
+                               
+                gauge_R = PoseArrayGauge{cnt}(1:ndim, 1:ndim);
+                gauge_t = PoseArrayGauge{cnt}(1:ndim, 1+ndim);
+               
+                rotation = R0' * R;
+                position = R0' * (t - t0);                
+                
+                gauge_rotation = gauge_R0' * gauge_R;
+                gauge_position = gauge_R0' * (gauge_t - gauge_t0);
+                                
+                R0 = R;  t0 = t;
+                gauge_R0 = gauge_R;  gauge_t0 = gauge_t;
+                
+                if(ndim == 3)
+                    rotation_diff = [rotation_diff,  SO3.Log(rotation' * gauge_rotation)];
+                end
+                if (ndim == 2)
+                    dR = rotation' * gauge_rotation;
+                    rotation_diff = [rotation_diff, atan2(dR(2,1), dR(1,1))];
+                end
+                position_diff = [position_diff,  position-gauge_position];
+                
+            end
+            
+            
+            RMSE_rot = norm(rotation_diff,  'fro');
+            RMSE_pos = norm(position_diff,  'fro');
+            
+            RMSE_rot = sqrt(RMSE_rot * RMSE_rot / nsize);
+            RMSE_pos = sqrt(RMSE_pos * RMSE_pos / nsize);
+            
+        end                
         
     end
 end

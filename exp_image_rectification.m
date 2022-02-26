@@ -172,10 +172,6 @@ rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoi
 
 
 
-image_rollingshutter = imresize(image_rollingshutter, size_of_final_image);
-image_template = imresize(image_template, size_of_final_image);
-rectified_img = imresize(rectified_img, size_of_final_image);
-
 close all;
 
 fontSize2 = 8;
@@ -263,19 +259,40 @@ exportgraphics(tfig, [paper_figure_dir, dataName, '_Jy_estimated_curve.pdf'], 'C
 
 
 
-figure('Name', 'RS Image', 'Position', [700, 500, 500, 400]);
+if ~isnan(size_of_final_image(1))
+scale_t = size_of_final_image(1)/size(image_template, 1);
+scale_r = size_of_final_image(1)/size(image_rollingshutter, 1);
+end
+if ~isnan(size_of_final_image(2))
+scale_t = size_of_final_image(2)/size(image_template, 2);
+scale_r = size_of_final_image(2)/size(image_rollingshutter, 2);
+end
+
+image_rollingshutter = imresize(image_rollingshutter, size_of_final_image);
+image_template = imresize(image_template, size_of_final_image);
+rectified_img = imresize(rectified_img, size_of_final_image);
+
+
+rsfig = figure('Name', 'RS Image', 'Position', [700, 500, 500, size_of_final_image(2)]); 
 imshow(image_rollingshutter);
-imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
+hold on;
+scatter(scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'r');
+hold off;
+exportgraphics(rsfig, [paper_figure_dir, dataName, '_rs_img.pdf'], 'ContentType', 'vector');
+% imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
 
 
-figure('Name', 'Template Image', 'Position', [0,  0, 500, 400]);
+ttfig = figure('Name', 'Template Image', 'Position', [0,  0, 500, size_of_final_image(2)]); 
 imshow(image_template);
-imwrite(image_template, [paper_figure_dir, dataName, '_template.png']);
+hold on;
+scatter(scale_t*keypoints_template(1, :), scale_t*keypoints_template(2, :), '.', 'r');
+hold off;
+exportgraphics(ttfig, [paper_figure_dir, dataName, '_template.pdf'], 'ContentType', 'vector');
+% imwrite(image_template, [paper_figure_dir, dataName, '_template.png']);
 
 
-figure('Name', 'rectified Image',  'Position', [700, 0, 500, 400]);
+figure('Name', 'rectified Image',  'Position', [700, 0, 500, size_of_final_image(2)]);
 imshow(rectified_img);
-
 imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
 
 pause(1.5)
