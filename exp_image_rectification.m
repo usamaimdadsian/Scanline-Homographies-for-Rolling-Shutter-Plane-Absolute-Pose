@@ -197,22 +197,26 @@ end
 
 
 
+
+
+normalized_keypoints_template = RSPAPP.output_KeyPoints.templatePointsNormalized;
+template_Jxpts = RSPAPP.output_KeyPoints.Jx_rollingshutterPoints;
+
 figure('Name', 'Key Points Matching', 'Position', [0, 500, 500, 400]);
-normalized_keypoints_template = RSPAPP.output_template_pts;
-template_Jxpts = RSPAPP.output_template_Jxpts;
 scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
 scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
 dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');
 title(sprintf('RMSE = %f',  sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2))));
 xlabel('x'); ylabel('y');    
+pause(0.1); 
 
 
 
-figure('Name', 'Scanline Homography', 'Position', [0, 1200, 550, 200]);
+scanlineHomographies = RSPAPP.output_RollingShutterImage.scanlineHomographies;
+yvalues = RSPAPP.output_RollingShutterImage.yvaluesNormalized;
+
+figure('Name', 'Scanline Homography', 'Position', [1200, 1200, 550, 200]);
 tfig = tiledlayout(1, 2, 'TileSpacing','Loose');
-
-scanlineHomographies = RSPAPP.output_scanlineHomographies;
-yvalues = RSPAPP.ouput_yvalues;
 
 ax1 = nexttile;
 Curve6 = zeros(6, length(scanlineHomographies));
@@ -255,6 +259,7 @@ title('normalized $\mathbf{J}(y)$', 'Interpreter','latex')
 lgd = legend([nk1, nk2, nk3, nk4, nk5, nk6], {'$\gamma_1$', '$\gamma_2$', '$\gamma_3$', '$\gamma_4$', '$\gamma_5$', '$\gamma_6$'}, ...
     'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off');
 lgd.Layout.Tile = 'South';
+pause(0.1); 
 exportgraphics(tfig, [paper_figure_dir, dataName, '_Jy_estimated_curve.pdf'], 'ContentType', 'Vector');
 
 
@@ -274,28 +279,24 @@ rectified_img = imresize(rectified_img, size_of_final_image);
 
 
 rsfig = figure('Name', 'RS Image', 'Position', [700, 500, 500, size_of_final_image(2)]); 
-imshow(image_rollingshutter);
-hold on;
-scatter(scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'r');
-hold off;
+imshow(image_rollingshutter); pause(0.1); hold on;
+scatter(scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'r'); hold off;
 exportgraphics(rsfig, [paper_figure_dir, dataName, '_rs_img.pdf'], 'ContentType', 'vector');
 % imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
 
 
 ttfig = figure('Name', 'Template Image', 'Position', [0,  0, 500, size_of_final_image(2)]); 
-imshow(image_template);
-hold on;
-scatter(scale_t*keypoints_template(1, :), scale_t*keypoints_template(2, :), '.', 'r');
-hold off;
+imshow(image_template); pause(0.1); hold on;
+scatter(scale_t*keypoints_template(1, :), scale_t*keypoints_template(2, :), '.', 'r'); hold off;
 exportgraphics(ttfig, [paper_figure_dir, dataName, '_template.pdf'], 'ContentType', 'vector');
 % imwrite(image_template, [paper_figure_dir, dataName, '_template.png']);
 
 
-figure('Name', 'rectified Image',  'Position', [700, 0, 500, size_of_final_image(2)]);
-imshow(rectified_img);
+rectfig = figure('Name', 'rectified Image',  'Position', [700, 0, 500, size_of_final_image(2)]);
+imshow(rectified_img); pause(0.1);
 imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
 
-pause(1.5)
+pause(1.0)
 
 end
 

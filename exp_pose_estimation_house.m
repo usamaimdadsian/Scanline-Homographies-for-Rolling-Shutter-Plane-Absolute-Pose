@@ -154,26 +154,29 @@ for ii = 1 : length(frame_names)
     RMSE_pos_arr(end, ii) = RMSE_pos;
     
     
+    
+    normalized_keypoints_template = RSPAPP.output_KeyPoints.templatePointsNormalized;
+    template_Jxpts = RSPAPP.output_KeyPoints.Jx_rollingshutterPoints;
+    
     figure('Name', 'Key Points Matching', 'Position', [0, 800, 500, 400]);
-    normalized_keypoints_template = RSPAPP.output_template_pts;
-    template_Jxpts = RSPAPP.output_template_Jxpts;
     scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
     scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
     dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');
     title(sprintf('RMSE = %f',  sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2))));
     xlabel('x'); ylabel('y');
     title(filename);
+    pause(0.1);
+    
     
     
     figure('Name', append_info, 'Position', [0, 0, 1600, 600]);
     tfig = tiledlayout(1, 2, 'TileSpacing', 'tight');
     ax1 = nexttile;
-    imshow(image_rollingshutter); 
-    hold on;
+    imshow(image_rollingshutter); pause(0.1); hold on;
     scatter(keypoints_rollingshutter(1, :), keypoints_rollingshutter(2, :), '.', 'r');
     hold off;
     ax2 = nexttile;
-    imshow(rectified_img);
+    imshow(rectified_img); pause(0.1);
     title(tfig, filename);
     
     
@@ -193,21 +196,24 @@ for ii = 1 : length(frame_names)
 
         dataName = ['House_', filename];
         
-        rsfig = figure('Name', 'RS Image');
-        imshow(image_rollingshutter);
-        hold on;
+        rsfig = figure('Name', 'RS Image', 'Position', [700, 800, 500, size_of_final_image(2)]);
+        imshow(image_rollingshutter); pause(0.1); hold on;
         scatter(scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'r');
         hold off;
+        pause(0.1);
         exportgraphics(rsfig, [paper_figure_dir, dataName, '_rs_img.pdf'], 'ContentType', 'vector');
         % imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
+        
+        
                 
-        figure('Name', 'rectified Image');
-        imshow(rectified_img);
+        rectfig = figure('Name', 'rectified Image',  'Position', [1200, 800, 500, size_of_final_image(2)]);
+        imshow(rectified_img); pause(0.1);
         imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
+
         
     end
     
-    pause(0.5);
+    pause(1);
     
 end
 
@@ -252,6 +258,8 @@ set(gca, 'YScale', 'log');
 
 lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off');
 lgd.Layout.Tile = 'South';
+pause(0.1); 
+
 exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_',  subdir{data_choice}, '.pdf'], 'ContentType', 'Vector');
 
 

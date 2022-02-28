@@ -9,9 +9,8 @@ classdef ScanlineHomographyEstimation < handle
         % the degree of the polynoimal for each B-spline
         polynomial_degree = [1, 1, 1, 2, 2]
         
-        %paramterization_type = 'Polynomial'
-        
-        paramterization_type = 'BSpline'
+        paramterization_type = 'Polynomial'        
+        %paramterization_type = 'BSpline'
         
         % this number must be greater than polynomial_degree+1
         % thus the minimal value is:  polynomial_degree+2

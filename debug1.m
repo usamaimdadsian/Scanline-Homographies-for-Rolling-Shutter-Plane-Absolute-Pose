@@ -59,8 +59,13 @@ yvalues = img_pts(2, :);
 
 
 JEstimate = ScanlineHomographyEstimation(img_pts(:, flag_training), template_pts(:, flag_training));
+JEstimate.EstimateScanlineHomography();
 scanlineHomographies = JEstimate.GetScanlineHomography(yvalues);
 [poses, plane_homographies] = FundamentalHomographyEquation.GetScanlinePoses (yvalues, scanlineHomographies, 100,  'object');
+
+
+
+
 
 
 GT_Pose = [R, -R*C]
