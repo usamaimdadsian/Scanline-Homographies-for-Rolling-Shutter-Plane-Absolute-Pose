@@ -149,7 +149,7 @@ for ii = 1 : length(frame_names)
     end
     
     
-    [RMSE_rot, RMSE_pos] = TrajectoryError.RelativePoseError (poses, gt_poses);
+    [RMSE_rot, RMSE_pos] = internal_packages.TrajectoryError.RelativePoseError (poses, gt_poses);
     RMSE_rot_arr(end, ii) = RMSE_rot;
     RMSE_pos_arr(end, ii) = RMSE_pos;
     

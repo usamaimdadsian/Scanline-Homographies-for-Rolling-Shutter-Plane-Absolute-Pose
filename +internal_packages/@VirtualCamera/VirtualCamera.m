@@ -25,7 +25,7 @@ classdef VirtualCamera < handle
         
         cameraMinRange = 10
         
-        cameraMaxRange = 200
+        cameraMaxRange = 35
         
         cameraPrinciplePoints = [0; 0]
         
@@ -40,22 +40,19 @@ classdef VirtualCamera < handle
     
     methods (Access = public)
         
-        
-        function obj = VirtualCamera(Xrange, Yrange, camera_radius, image_noise_level)
-            if (nargin == 0)
-                Xrange = 1 : 40;
-                Yrange = 1 : 20;
-                camera_radius = 50;
-                image_noise_level = 0;
+        function obj = VirtualCamera (n_num_points, n_num_cameras)
+            if (nargin == 2)
+                obj.num_points = n_num_points;
+                obj.num_cameras = n_num_cameras;
+                obj.genData(n_num_points, n_num_cameras, 0, 1);
             end
-            obj.genData(Xrange, Yrange, camera_radius, image_noise_level)
         end
         
         
-        function [DataCell, VisCell] = genData (this, Xrange, Yrange, camera_radius, image_noise_level)
-           
-            this.simulatePlanarSceneAndCameras (Xrange, Yrange, camera_radius, 0);
-
+        function [DataCell, VisCell] = genData (this, n_num_points, n_num_cameras, camera_noise_level, image_noise_level)
+            
+            this.simulatePointCameraConfigByCylinder (n_num_points, n_num_cameras, camera_noise_level);
+            
             this.simulateCameraInstrinsics();
             
             this.assembleCameraMatrix ();
@@ -69,9 +66,8 @@ classdef VirtualCamera < handle
                 normal_distribution =  randn(2, this.num_points);
                 normal_distribution(normal_distribution>2.0) = 2.0;
                 normal_distribution(normal_distribution<-2.0) = -2.0;
-                normal_distribution(2, :) = 0;
                 
-                this.ImgPoints(ii).Data = hgPts([1, 2], :)./hgPts(3, :) + image_noise_level * normal_distribution ;          
+                this.ImgPoints(ii).Data = hgPts([1, 2], :)./hgPts(3, :) + image_noise_level * normal_distribution;          
                 
                 this.ImgPoints(ii).Data = this.ImgPoints(ii).Data .* this.ImgPoints(ii).Vis;
                 
@@ -108,30 +104,36 @@ classdef VirtualCamera < handle
     
 
     methods (Access = private)
-       
         
-        
-        function simulatePlanarSceneAndCameras (this,  Xrange, Yrange, camera_radius, sigma_camera_pos)
+        function simulatePointCameraConfigByCylinder (this, n_num_points, n_num_cameras, sigma_camera_pos)
+            
+            ptsradius = 10; 
+            camera_radius = 30;
+            zscale = 10;
 
-            Zrange = 0;
+            % simulate point-cloud
+            this.GT_Points3D = 2.0*ptsradius * rand(3, n_num_points) - ptsradius;
             
-            [X, Y, Z] = meshgrid(Xrange, Yrange, Zrange);
+            % simulate camera centers
+            [CX, CY, CZ] = cylinder(camera_radius, round(n_num_cameras)+0);
+            CZ = zscale * CZ;
             
-            this.GT_Points3D = [ vec(X')'; vec(Y')'; vec(Z')' ];
-
-            angles = [30: 20: 150]*(pi/180);
-            
-            CY = camera_radius * cos(angles) + median(Yrange); 
-            CZ = camera_radius * sin(angles) + median(Zrange);
-            CX = median(Xrange) * ones(1, length(angles));
-            
-            CameraCenters = [CX;  CY; CZ];
+            Rim1 = [CX(1,1:end-1); CY(1,1:end-1); CZ(1,1:end-1); ];
+            Rim1 = Rim1(:, 1:n_num_cameras);
+            Rim2 = [CX(2,1:end-1); CY(2,1:end-1); CZ(2,1:end-1); ];
+            Rim2 = Rim2(:, 1:n_num_cameras);
             
             points_centroid = mean(this.GT_Points3D, 2);
             
-            for ii = 1 : length(CameraCenters)
+            for ii = 1 : n_num_cameras
                 
-                this.CameraComponents(ii).Center = CameraCenters(:, ii);
+                if (mod(ii,2))
+                    this.CameraComponents(ii).Center =  Rim1(:, ii);
+                else
+                    this.CameraComponents(ii).Center =  Rim2(:, ii);
+                end
+%                 this.CameraComponents(ii).Center =  (Rim1(:, ii)+Rim2(:, ii))/2;
+                
                 % simulate camera orientations by facing towards/outwards the centroid of the point-cloud
                 
                 principleAxis = points_centroid - this.CameraComponents(ii).Center;
@@ -142,17 +144,16 @@ classdef VirtualCamera < handle
                 
                 principleAxis = principleAxis + sigma_camera_pos * normal_distribution;
                 
-%                 this.CameraComponents(ii).Rotation = VirtualCamera.cameraRotationByTwoAxes (principleAxis, [1; 0; 0]);
-                
-                this.CameraComponents(ii).Rotation = VirtualCamera.cameraRotationByPrincipleAxis (principleAxis);
+                this.CameraComponents(ii).Rotation = this.cameraRotationByPrincipleAxis (principleAxis);
                 
             end
             
-            this.num_points = length(this.GT_Points3D);
+            this.num_points = n_num_points;
             
-            this.num_cameras = length(this.CameraComponents);
+            this.num_cameras = n_num_cameras;
             
         end
+        
         
         
         
@@ -243,24 +244,6 @@ classdef VirtualCamera < handle
             
         end
         
-
-        
-        function R = cameraRotationByTwoAxes (principleAxis, anotherAxis)
-            
-            [~, ~, V ] = svd ([2*principleAxis/norm(principleAxis), anotherAxis]');
-            
-            R = V(:, [2,3,1])';
-            
-            if (R(3,:) * principleAxis < 0)
-                R(3, :) = - R(3, :);
-            end
-            
-            if (det(R) < 0)
-                R(1, :) = - R(1, :);
-            end
-            
-        end
-
     end
     
     

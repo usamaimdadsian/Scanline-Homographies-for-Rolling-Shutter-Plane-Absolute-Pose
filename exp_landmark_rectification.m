@@ -6,12 +6,18 @@ addpath('VirtualCamera/');
 
 
 Xrange = 1 :  0.1 : 3
-Yrange = 1 : 0.1 : 3;
+Yrange = 1 : 1 : 5;
 camera_radius = 20;
-image_noise_level = 0.01;
+image_noise_level = 0.0;
 
-CAM =  VirtualCamera(Xrange, Yrange, camera_radius, image_noise_level);
+rs_sigma_rot = 0.04;
+rs_sigma_pos = 0.1;
 
+param_paramterization_type = 'BSpline';
+param_polynomial_degree = [ 3, 3, 3, 3, 3];
+param_num_control_points = [5, 5, 5, 5, 5];
+
+CAM =  internal_packages.VirtualRollingShutterCamera (Xrange, Yrange, camera_radius, image_noise_level, rs_sigma_rot, rs_sigma_pos);
 
 
 
@@ -20,13 +26,19 @@ chc = 4;
 
 chc = 2;
 
-cam = CAM.GT_CameraMatrix{chc};
-[K, R, C] = VirtualCamera.decomposeCameraMatrix(cam);
 
-img_pts = CAM.ImgPoints(chc).Data;
+rs_image = CAM.ImgPoints(chc);
+rs_camera = CAM.GT_RollingShutterCameraMatrix(chc);
+
+K = rs_camera.CalibrationMatrix;
+GT_poses = rs_camera.PerPointPoses;
 
 
-template_pts = CAM.GT_Points3D;
+
+img_pts = rs_image.All;
+template_pts = CAM.GT_Points3D.All;
+
+
 template_pts = template_pts([1,2], :);
 
 
@@ -51,9 +63,9 @@ xlabel('x'); ylabel('y');
 
 % solve landmark rectification problem
 RSPAPP = RollingShutterPlaneAbsolutePoseProblem;
-% RSPAPP.param_paramterization_type = param_paramterization_type;
-% RSPAPP.param_polynomial_degree = param_polynomial_degree;
-% RSPAPP.param_num_control_points = param_num_control_points;
+RSPAPP.param_paramterization_type = param_paramterization_type;
+RSPAPP.param_polynomial_degree = param_polynomial_degree;
+RSPAPP.param_num_control_points = param_num_control_points;
 
 keypoints_rollingshutter = img_pts(:, flag_training);
 keypoints_template = template_pts(:, flag_training);
@@ -61,7 +73,7 @@ keypoints_template = template_pts(:, flag_training);
 calibration_rollingshutter = K;
 calibration_template = eye(3);
 
-landmarks_rollingshutter = img_pts(:, ~flag_training);
+landmarks_rollingshutter = img_pts;
 template_type = 'object';
 
 
@@ -69,10 +81,11 @@ template_type = 'object';
 
 
 
-GT_Pose = [R, -R*C]
+
+
 pose_error = 0;
-for ii = 1 : length(poses)    
-    tmp = norm(poses{ii} - GT_Pose, 'fro');
+for ii = 1 : length(poses)
+    tmp = norm(poses{ii} - GT_poses{ii}, 'fro');
     pose_error = pose_error + tmp*tmp;
 end
 pose_error = sqrt(pose_error/length(poses))

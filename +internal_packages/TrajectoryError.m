@@ -39,7 +39,7 @@ classdef TrajectoryError
                 gauge_position = poseGauge(1:ndim, 1+ndim);
                 
                 if(ndim == 3)
-                    rotation_diff = [rotation_diff,  SO3.Log(rotation' * gauge_rotation)];
+                    rotation_diff = [rotation_diff,  internal_packages.SO3.Log(rotation' * gauge_rotation)];
                 end
                 if (ndim == 2)
                     dR = rotation' * gauge_rotation;
@@ -104,7 +104,7 @@ classdef TrajectoryError
                 gauge_position = poseGauge(1:ndim, 1+ndim);
                 
                 if(ndim == 3)
-                    rotation_diff = [rotation_diff,  SO3.Log(rotation' * gauge_rotation)];
+                    rotation_diff = [rotation_diff,  internal_packages.SO3.Log(rotation' * gauge_rotation)];
                 end
                 if (ndim == 2)
                     dR = rotation' * gauge_rotation;
@@ -170,7 +170,7 @@ classdef TrajectoryError
                 gauge_R0 = gauge_R;  gauge_t0 = gauge_t;
                 
                 if(ndim == 3)
-                    rotation_diff = [rotation_diff,  SO3.Log(rotation' * gauge_rotation)];
+                    rotation_diff = [rotation_diff,  internal_packages.SO3.Log(rotation' * gauge_rotation)];
                 end
                 if (ndim == 2)
                     dR = rotation' * gauge_rotation;

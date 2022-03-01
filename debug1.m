@@ -10,18 +10,21 @@ Yrange = 1 : 0.1 : 3;
 camera_radius = 20;
 image_noise_level = 0.01;
 
-CAM =  VirtualCamera(Xrange, Yrange, camera_radius, image_noise_level);
+
+CAM =  internal_packages.VirtualRollingShutterCamera(Xrange, Yrange, camera_radius, image_noise_level);
+
 
 
 
 
 % choose one imge
-chc = 4;
+% Front view
+%chc = 4;
+chc = 1;
 
-chc = 2;
 
 cam = CAM.GT_CameraMatrix{chc};
-[K, R, C] = VirtualCamera.decomposeCameraMatrix(cam);
+[K, R, C] = CAM.decomposeCameraMatrix(cam);
 
 img_pts = CAM.ImgPoints(chc).Data;
 

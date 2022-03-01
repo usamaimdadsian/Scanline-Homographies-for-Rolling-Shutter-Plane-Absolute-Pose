@@ -20,7 +20,7 @@ for ii = 1 : length(CameraMatrices)
     else
         
         [K, R, C] = VirtualCamera.decomposeCameraMatrix (P);
-        plotCamera('Location', C, 'Orientation', R, 'Opacity', 0, 'Color', 'k', 'AxesVisible', true, 'Size', 10);
+        plotCamera('Location', C, 'Orientation', R, 'Opacity', 0, 'Color', 'k', 'AxesVisible', false, 'Size', 1.0);
         
     end
     
