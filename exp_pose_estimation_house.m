@@ -79,8 +79,8 @@ RMSE_pos_arr = [];
 exp_curve_names = {};
 
 
-%for pcnt = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-for pcnt = [2]
+for pcnt = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+%for pcnt = [2]
     
 param_paramterization_type = params(pcnt).param_paramterization_type;    
 param_polynomial_degree = params(pcnt).param_polynomial_degree;
@@ -222,7 +222,8 @@ close all;
 end
 
 
-return;
+
+
 
 fontSize2 = 8;
 

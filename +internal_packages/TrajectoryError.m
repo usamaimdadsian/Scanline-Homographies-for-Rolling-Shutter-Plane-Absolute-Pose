@@ -189,6 +189,7 @@ classdef TrajectoryError
             
         end                
         
+        
     end
 end
 

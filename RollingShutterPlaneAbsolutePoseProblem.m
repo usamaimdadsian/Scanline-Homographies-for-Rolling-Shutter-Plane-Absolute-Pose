@@ -24,6 +24,12 @@ classdef RollingShutterPlaneAbsolutePoseProblem < handle
     end
     
     
+    properties (Access = private)
+        
+        use_svd_for_numerical_accuracy = true
+        
+    end
+    
     
     methods (Access = public)
         
@@ -115,7 +121,7 @@ classdef RollingShutterPlaneAbsolutePoseProblem < handle
             JEstimate.num_control_points = this.param_num_control_points;
             
             % it seems that using SVD does not improve anything
-            JEstimate.use_svd_for_numerical_accuracy = false;
+            JEstimate.use_svd_for_numerical_accuracy = this.use_svd_for_numerical_accuracy;
             
             JEstimate.EstimateScanlineHomography(normalized_keypoints_rollingshutter, normalized_keypoints_template);
             

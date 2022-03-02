@@ -3,15 +3,17 @@ classdef VirtualRollingShutterCamera < handle
     
     properties (Access = public)
         
-        ImgPoints = struct('All', [], 'PerScanline', [])
+        ImgPoints = struct('RollingShutterAll', [], 'RollingShutterPerScanline', [], 'GlobalShutter', [])
         
         GT_RollingShutterCameraMatrix = struct('CalibrationMatrix', [],  'PerScanlinePoses', [],  'PerPointPoses', [])
         
         GT_Points3D = struct('All', [], 'PerScanline', [])
  
-        param_rs_sigma_rot = 0.001;
+        param_rs_sigma_rot = 0.01;
         
-        param_rs_sigma_pos = 0.001;
+        param_rs_sigma_pos = 0.01;
+        
+        global_shutter_anchor = 1
         
     end
     
@@ -59,11 +61,11 @@ classdef VirtualRollingShutterCamera < handle
             if exist('rs_param_pos', 'var')
                 obj.param_rs_sigma_pos = rs_param_pos;
             end
-            obj.genData(Xrange, Yrange, camera_radius, image_noise_level)
+            obj.genData(Xrange, Yrange, camera_radius, image_noise_level);
         end
         
         
-        function ImgPts = genData (this, Xrange, Yrange, camera_radius, image_noise_level)
+        function genData (this, Xrange, Yrange, camera_radius, image_noise_level)
            
             this.simulatePlanarSceneAndCameras (Xrange, Yrange, camera_radius, 0);
 
@@ -75,33 +77,35 @@ classdef VirtualRollingShutterCamera < handle
 
                 K = this.GT_RollingShutterCameraMatrix(ii).CalibrationMatrix;
                 rs_poses = this.GT_RollingShutterCameraMatrix(ii).PerScanlinePoses;
-            
+                
+                hgpts = K * rs_poses{this.global_shutter_anchor} * [this.GT_Points3D.All;  ones(1, size(this.GT_Points3D.All, 2));];
+                this.ImgPoints(ii).GlobalShutter = hgpts([1, 2], :) ./ hgpts(3, :);
+                
                 ImgPts = [];
                 
                 PerPointPoses = cell(1, size(this.GT_Points3D.All, 2));
                 tmp = 1;
                 
                 for jj = 1 : this.num_of_scanlines                   
-                    CameraMatrix = K * rs_poses{jj};
-                    
+      
                     Points3DPerScanline = this.GT_Points3D.PerScanline{jj};
                      
-                    hgPts = CameraMatrix * [Points3DPerScanline; ones(1, size(Points3DPerScanline, 2))];
+                    hgPts = K * rs_poses{jj} * [Points3DPerScanline; ones(1, size(Points3DPerScanline, 2))];
                     
                     normal_distribution =  randn(2, size(hgPts, 2));
-                    normal_distribution(normal_distribution>2.0) = 2.0;
-                    normal_distribution(normal_distribution<-2.0) = -2.0;
+                    normal_distribution(normal_distribution>3.0) = 3.0;
+                    normal_distribution(normal_distribution<-3.0) = -3.0;
                     
-                    this.ImgPoints(ii).PerScanline{jj} = hgPts([1, 2], :)./hgPts(3, :) + image_noise_level * normal_distribution ;
+                    this.ImgPoints(ii).RollingShutterPerScanline{jj} = hgPts([1, 2], :)./hgPts(3, :) + image_noise_level * normal_distribution ;
         
-                    ImgPts = [ImgPts,  this.ImgPoints(ii).PerScanline{jj}];
+                    ImgPts = [ImgPts,  this.ImgPoints(ii).RollingShutterPerScanline{jj}];
                     
                     PerPointPoses(tmp: (tmp+size(Points3DPerScanline, 2)-1)) = rs_poses(jj);
                     tmp = tmp +size(Points3DPerScanline, 2);
                     
                 end
                 
-                this.ImgPoints(ii).All = ImgPts;
+                this.ImgPoints(ii).RollingShutterAll = ImgPts;                
                 
                 this.GT_RollingShutterCameraMatrix(ii).PerPointPoses = PerPointPoses;
                 

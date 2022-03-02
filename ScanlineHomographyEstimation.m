@@ -17,7 +17,7 @@ classdef ScanlineHomographyEstimation < handle
         num_control_points = [3, 3, 3, 4, 4]
         
         % the flag to use SVD decomposition to improve numerical accuracy.
-        use_svd_for_numerical_accuracy = false;
+        use_svd_for_numerical_accuracy = true;
         
     end
     

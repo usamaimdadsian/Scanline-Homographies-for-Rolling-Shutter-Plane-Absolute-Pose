@@ -2,17 +2,17 @@ clear all
 close all
 clc
 
-addpath('VirtualCamera/');
 
 
-Xrange = 1 :  0.1 : 3
-Yrange = 1 : 1 : 5;
+Xrange = 1 :  0.4 : 8;
+Yrange = 1 : 2 : 10;
 camera_radius = 20;
 image_noise_level = 0.0;
 
-rs_sigma_rot = 0.04;
-rs_sigma_pos = 0.1;
+rs_sigma_rot = 0.01;
+rs_sigma_pos = 0.01;
 
+%param_paramterization_type = 'Polynomial';
 param_paramterization_type = 'BSpline';
 param_polynomial_degree = [ 3, 3, 3, 3, 3];
 param_num_control_points = [5, 5, 5, 5, 5];
@@ -22,42 +22,38 @@ CAM =  internal_packages.VirtualRollingShutterCamera (Xrange, Yrange, camera_rad
 
 
 % choose one imge
-chc = 4;
+chc = 1;
 
-chc = 2;
+template_type = 'object';
+% template_type = 'image';
 
 
 rs_image = CAM.ImgPoints(chc);
 rs_camera = CAM.GT_RollingShutterCameraMatrix(chc);
 
-K = rs_camera.CalibrationMatrix;
 GT_poses = rs_camera.PerPointPoses;
 
-
-
-img_pts = rs_image.All;
-template_pts = CAM.GT_Points3D.All;
-
-
-template_pts = template_pts([1,2], :);
-
+img_pts = rs_image.RollingShutterAll;
+GS_img_pts = rs_image.GlobalShutter;
+calibration_rollingshutter = rs_camera.CalibrationMatrix;
 
 flag_training = false(1, size(img_pts, 2));
-flag_training (1 : 7 : size(img_pts, 2)) = true;
+flag_training (1 : 4 : size(img_pts, 2)) = true;
+fprintf(1, 'number of points for training: %f \n', sum(flag_training));
+fprintf(1, 'number of points for validation: %f \n', sum(~flag_training));
 
 
-fprintf(2, 'number of points for training: %f \n', sum(flag_training));
-fprintf(2, 'number of points for validation: %f \n', sum(~flag_training));
+if strcmp(template_type, 'object')
+    template_pts = CAM.GT_Points3D.All([1, 2], :);
+    calibration_template = eye(3);
+end
+if strcmp(template_type, 'image')
+    template_pts = CAM.ImgPoints(4).GlobalShutter;
+    calibration_template = CAM.GT_RollingShutterCameraMatrix(4).CalibrationMatrix;
+end
 
-hfig1 = figure('Name', 'Rolling Shutter Landmarks', 'Position', [0, 0, 300, 300]);
-scatter(img_pts(1, flag_training), img_pts(2, flag_training), 'g*'); hold on;
-scatter(img_pts(1, ~flag_training), img_pts(2, ~flag_training), 'k*'); hold on;
-xlabel('x'); ylabel('y');
 
-hfig2 = figure('Name', 'template', 'Position', [400, 0, 300, 300]);
-scatter(template_pts(1, flag_training), template_pts(2, flag_training), 'go'); hold on;
-scatter(template_pts(1, ~flag_training), template_pts(2, ~flag_training), 'ko'); hold on;
-xlabel('x'); ylabel('y');
+
 
 
 
@@ -70,11 +66,10 @@ RSPAPP.param_num_control_points = param_num_control_points;
 keypoints_rollingshutter = img_pts(:, flag_training);
 keypoints_template = template_pts(:, flag_training);
 
-calibration_rollingshutter = K;
-calibration_template = eye(3);
+
 
 landmarks_rollingshutter = img_pts;
-template_type = 'object';
+
 
 
 [rectified_landmarks,  poses] = RSPAPP.SolveLandmarkRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, landmarks_rollingshutter, template_type);
@@ -82,34 +77,54 @@ template_type = 'object';
 
 
 
-
-pose_error = 0;
-for ii = 1 : length(poses)
-    tmp = norm(poses{ii} - GT_poses{ii}, 'fro');
-    pose_error = pose_error + tmp*tmp;
-end
-pose_error = sqrt(pose_error/length(poses))
+[APE_rot, APE_pos] = internal_packages.TrajectoryError.AbsoluteTrajectoryErrorByFirst(poses, GT_poses)
+[RPE_rot, RPE_pos] = internal_packages.TrajectoryError.RelativePoseError(poses, GT_poses)
+figure('Name', 'Trajectory Visualization', 'Position', [1400, 0, 600, 600]);
+h1 = plotPoses (poses);
+h2 = plotPoses(GT_poses);
 
 
-Jxpts_training = RSPAPP.output_KeyPoints.Jx_rollingshutterPoints;
-Jxpts_test = RSPAPP.output_RollingShutterLandmarks.Jx_rollingshutterLandmarks;
+Jxpts_landmarks = RSPAPP.output_RollingShutterLandmarks.Jx_rollingshutterLandmarks;
+normalized_template_pts = inv(calibration_template) * [template_pts; ones(1, size(template_pts, 2));];
+normalized_template_pts = normalized_template_pts([1,2], :) ./ normalized_template_pts(3, :);
 
 figure('Name', 'scanline homography mapping', 'Position', [0, 400, 600, 400]);
-scatter(template_pts(1, flag_training), template_pts(2, flag_training), 'go'); hold on;
-scatter(template_pts(1, ~flag_training), template_pts(2, ~flag_training), 'ko'); hold on;
-scatter(Jxpts_training(1,:), Jxpts_training(2,:), 'g*'); 
-scatter(Jxpts_test(1,:), Jxpts_test(2,:), 'k*');
+hold on;
+scatter(normalized_template_pts(1, flag_training), normalized_template_pts(2, flag_training), 'go');
+scatter(normalized_template_pts(1, ~flag_training), normalized_template_pts(2, ~flag_training), 'ko');
+scatter(Jxpts_landmarks(1, flag_training), Jxpts_landmarks(2, flag_training), 'g*');
+scatter(Jxpts_landmarks(1, ~flag_training), Jxpts_landmarks(2, ~flag_training), 'k*');
 hold off;
 xlabel('x'); ylabel('y');
-title(sprintf('Pose Error = %f', pose_error));
 
 
 
 
 
+hfig1 = figure('Name', 'Rolling Shutter Landmarks', 'Position', [0, 0, 300, 300]);
+hold on;
+scatter(img_pts(1, flag_training), img_pts(2, flag_training), 'g*');
+scatter(img_pts(1, ~flag_training), img_pts(2, ~flag_training), 'k*');
+scatter(GS_img_pts(1, :),  GS_img_pts(2, :),  'rs');
+hold off;
+axis equal;
+xlabel('x'); ylabel('y');
 
-figure('Name', 'Rectified Landmarks', 'Position', [1000, 0, 700, 700]);
+
+hfig2 = figure('Name', 'template', 'Position', [450, 0, 300, 300]);
+hold on;
+scatter(template_pts(1, flag_training), template_pts(2, flag_training), 'gs');
+scatter(template_pts(1, ~flag_training), template_pts(2, ~flag_training), 'ks');
+hold off;
+axis equal;
+xlabel('x'); ylabel('y');
+
+hfig3 = figure('Name', 'Rectified Landmarks', 'Position', [800, 0, 300, 300]);
+hold on;
 scatter(rectified_landmarks(1, :), rectified_landmarks(2, :), '*');
+scatter(GS_img_pts(1, :),  GS_img_pts(2, :),  'rs');
+hold off;
+axis equal;
 xlabel('x'); ylabel('y');
 
 
@@ -166,3 +181,16 @@ lgd = legend([nk1, nk2, nk3, nk4, nk5, nk6], {'$\gamma_1$', '$\gamma_2$', '$\gam
 lgd.Layout.Tile = 'South';
 
 
+
+
+
+function h = plotPoses (poseCell)
+    pos_arr = [];
+    for ii = 1 : length(poseCell)
+        pos_arr = [pos_arr, poseCell{ii}(:, 4)];
+    end
+    hold on;
+    h = plot3(pos_arr(1, :), pos_arr(2, :), pos_arr(3, :), '.-');
+    hold off;
+    view(3);
+end
