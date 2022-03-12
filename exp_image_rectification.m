@@ -171,6 +171,13 @@ RSPAPP.param_num_control_points = param_num_control_points;
 rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter);
 
 
+if (pcnt == 1)
+    % Benchmark: Yizhen's method
+    RSPAPP_Yizhen = BenchmarkYizhen;
+    rectified_img_yizhen = RSPAPP_Yizhen.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, image_rollingshutter, image_template);    
+end
+
+
 
 close all;
 
@@ -295,6 +302,16 @@ exportgraphics(ttfig, [paper_figure_dir, dataName, '_template.pdf'], 'ContentTyp
 rectfig = figure('Name', 'rectified Image',  'Position', [700, 0, 500, size_of_final_image(2)]);
 imshow(rectified_img); pause(0.1);
 imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
+
+
+
+
+if (pcnt == 1)
+rectified_img_yizhen = imresize(rectified_img_yizhen, [size(rectified_img, 1), size(rectified_img, 2)]);    
+rectfig_yizhen = figure('Name', 'rectified Image Yizhen',  'Position', [1400, 0, 500, size_of_final_image(2)]);
+imshow(rectified_img_yizhen); pause(0.1);
+imwrite(rectified_img_yizhen, [paper_figure_dir, dataName, '_rect_img_', 'Yizhen', '.png']);
+end      
 
 pause(1.0)
 

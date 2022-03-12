@@ -193,7 +193,7 @@ classdef VirtualRollingShutterCamera < handle
         function simulateCameraInstrinsics (this)
             
             % generate a sequence of camera focal lengths
-            this.cameraFocalLength = 0.01 * [0.25 + 0.01*(0 : this.num_cameras-1)];
+            this.cameraFocalLength =0.001*ones(this.num_cameras,1);% 0.01 * [0.25 + 0.01*(0 : this.num_cameras-1)];
             
             px = this.cameraPrinciplePoints(1) * this.xPixelPerUnit;
             py = this.cameraPrinciplePoints(2) * this.yPixelPerUnit;

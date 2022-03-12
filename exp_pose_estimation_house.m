@@ -15,8 +15,8 @@ data_options =[6];
 data_choice = data_options(1);
 data_dir = [fdir, subdir{data_choice}];
 
-%template_image = 'gt_start_frame01_template.png';
-%gs_template_image = imread(template_image);
+template_image = 'gt_start_frame09_template.png';
+gs_template_image = imread([fdir, template_image]);
 
 save_param_option = 2;
 
@@ -79,8 +79,7 @@ RMSE_pos_arr = [];
 exp_curve_names = {};
 
 
-for pcnt = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-%for pcnt = [2]
+for pcnt = 1 : length(params)
     
 param_paramterization_type = params(pcnt).param_paramterization_type;    
 param_polynomial_degree = params(pcnt).param_polynomial_degree;
@@ -121,6 +120,8 @@ RMSE_pos_arr = [RMSE_pos_arr;   zeros(1, length(frame_names))];
 
 for ii = 1 : length(frame_names)
     
+    close all;    
+    
     filename = frame_names{ii};
     
     keypoints_rollingshutter = readmatrix([rs_data_dir,  filename, '.txt'])';
@@ -136,6 +137,15 @@ for ii = 1 : length(frame_names)
     RSPAPP.param_num_control_points = param_num_control_points;
     
     [rectified_img, poses] = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_matrix, calibration_matrix, image_rollingshutter, 'image');
+
+    
+    if sum(pcnt == save_param_option)
+        % Benchmark: Yizhen's method
+        RSPAPP_Yizhen = BenchmarkYizhen;
+        rectified_img_yizhen = RSPAPP_Yizhen.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_matrix, image_rollingshutter, gs_template_image );
+    end
+    
+    close all;
 
     
     % rectifiy the coordinate system from left-hand to right-hand
@@ -205,11 +215,20 @@ for ii = 1 : length(frame_names)
         % imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
         
         
-                
+        
+%         rectified_img = imdiffusefilt(rectified_img)
+        
         rectfig = figure('Name', 'rectified Image',  'Position', [1200, 800, 500, size_of_final_image(2)]);
         imshow(rectified_img); pause(0.1);
         imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '.png']);
+        
+        
 
+            rectified_img_yizhen = imresize(rectified_img_yizhen, [size(rectified_img, 1), size(rectified_img, 2)]); 
+            rectfig_yizhen = figure('Name', 'rectified Image Yizhen',  'Position', [1600, 800, 500, size_of_final_image(2)]);
+            imshow(rectified_img_yizhen); pause(0.1);
+            imwrite(rectified_img_yizhen, [paper_figure_dir, dataName, '_rect_img_', 'Yizhen', '.png']);
+        
         
     end
     
@@ -217,7 +236,6 @@ for ii = 1 : length(frame_names)
     
 end
 
-close all;
 
 end
 
@@ -262,6 +280,9 @@ lgd.Layout.Tile = 'South';
 pause(0.1); 
 
 exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_',  subdir{data_choice}, '.pdf'], 'ContentType', 'Vector');
+
+
+
 
 
 
