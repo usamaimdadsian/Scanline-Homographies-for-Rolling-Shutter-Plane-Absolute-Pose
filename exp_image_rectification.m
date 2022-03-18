@@ -157,9 +157,7 @@ keypoints_template = readmatrix([template_name, '.txt'])';
 image_rollingshutter = imread([rollingshutter_name, '.png']);
 image_template = imread([template_name, '.png']);
 
-calibration_template = readmatrix([calibration_name, '.txt']);
-calibration_rollingshutter =  readmatrix([calibration_name, '.txt']);
-
+calibration_matrix = readmatrix([calibration_name, '.txt']);
 
 % solve Image rectification problem
 RSPAPP = RollingShutterPlaneAbsolutePoseProblem;
@@ -168,13 +166,13 @@ RSPAPP.param_paramterization_type = param_paramterization_type;
 RSPAPP.param_polynomial_degree = param_polynomial_degree;
 RSPAPP.param_num_control_points = param_num_control_points;
 
-rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter);
+rectified_img = RSPAPP.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_matrix, calibration_matrix, image_rollingshutter);
 
 
-if (pcnt == 1)
+if (pcnt == 1 && 1)
     % Benchmark: Yizhen's method
     RSPAPP_Yizhen = BenchmarkYizhen;
-    rectified_img_yizhen = RSPAPP_Yizhen.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, image_rollingshutter, image_template);    
+    rectified_img_yizhen = RSPAPP_Yizhen.SolveImageRectification (keypoints_rollingshutter, keypoints_template, calibration_matrix, calibration_matrix, image_rollingshutter, 'image');
 end
 
 
@@ -209,7 +207,7 @@ end
 normalized_keypoints_template = RSPAPP.output_KeyPoints.templatePointsNormalized;
 template_Jxpts = RSPAPP.output_KeyPoints.Jx_rollingshutterPoints;
 
-figure('Name', 'Key Points Matching', 'Position', [0, 500, 500, 400]);
+figure('Name', 'Key Points Matching', 'Position', [0, 500, 550, 400]);
 scatter(normalized_keypoints_template(1,:), normalized_keypoints_template(2,:), 'bo'); hold on;
 scatter(template_Jxpts(1,:), template_Jxpts(2,:), 'r*'); hold off;
 dvnorm = norm(template_Jxpts - normalized_keypoints_template, 'fro');
@@ -222,8 +220,11 @@ pause(0.1);
 scanlineHomographies = RSPAPP.output_RollingShutterImage.scanlineHomographies;
 yvalues = RSPAPP.output_RollingShutterImage.yvaluesNormalized;
 
-figure('Name', 'Scanline Homography', 'Position', [1200, 1200, 550, 200]);
-tfig = tiledlayout(1, 2, 'TileSpacing','Loose');
+figure('Name', 'Scanline Homography', 'Position', [1200, 1200, 550, 300]);
+tfig = tiledlayout(2, 1, 'TileSpacing','Loose');
+
+linewith = {1.5, 1.5, 1.5, 1.5, 1.5, 1.5};
+linecolor = {'#FF0000', '#00FF00', 	'#0000FF', 	'#00FFFF', '#FFFF00', 	'#000000'};
 
 ax1 = nexttile;
 Curve6 = zeros(6, length(scanlineHomographies));
@@ -231,12 +232,12 @@ for ii = 1 : length(scanlineHomographies)
     Curve6(:, ii) = reshape(scanlineHomographies{ii}, 6, 1);
 end
 hold on;
-k1 = plot(yvalues,  Curve6(1, :), '-', 'LineWidth', 2.5);
-k2 = plot(yvalues,  Curve6(2, :), '-', 'LineWidth', 2.5);
-k3 = plot(yvalues,  Curve6(3, :), '-', 'LineWidth', 2.5);
-k4 = plot(yvalues,  Curve6(4, :), '-');
-k5 = plot(yvalues,  Curve6(5, :), '-');
-k6 = plot(yvalues,  Curve6(6, :), 'k-', 'LineWidth', 4);
+k1 = plot(yvalues,  Curve6(1, :), '-', 'LineWidth', linewith{1}, 'Color', linecolor{1});
+k2 = plot(yvalues,  Curve6(2, :), '-', 'LineWidth', linewith{2}, 'Color', linecolor{2});
+k3 = plot(yvalues,  Curve6(3, :), '-', 'LineWidth', linewith{3}, 'Color', linecolor{3});
+k4 = plot(yvalues,  Curve6(4, :), '-', 'LineWidth', linewith{4}, 'Color', linecolor{4});
+k5 = plot(yvalues,  Curve6(5, :), '-', 'LineWidth', linewith{5}, 'Color', linecolor{5});
+k6 = plot(yvalues,  Curve6(6, :), '-', 'LineWidth', linewith{6}, 'Color', linecolor{6});
 hold off;
 box on;
 xlabel('normalized $y$ values', 'Interpreter','latex');
@@ -251,12 +252,12 @@ for ii = 1 : length(scanlineHomographies)
     Curve6(:, ii) = reshape(J, 6, 1);
 end
 hold on;
-nk1 = plot(yvalues,  Curve6(1, :), '-', 'LineWidth', 2.5);
-nk2 = plot(yvalues,  Curve6(2, :), '-', 'LineWidth', 2.5);
-nk3 = plot(yvalues,  Curve6(3, :), '-', 'LineWidth', 2.5);
-nk4 = plot(yvalues,  Curve6(4, :), '-');
-nk5 = plot(yvalues,  Curve6(5, :), '-');
-nk6 = plot(yvalues,  Curve6(6, :), 'k-', 'LineWidth', 4);
+nk1 = plot(yvalues,  Curve6(1, :), '-', 'LineWidth', linewith{1}, 'Color', linecolor{1});
+nk2 = plot(yvalues,  Curve6(2, :), '-', 'LineWidth', linewith{2}, 'Color', linecolor{2});
+nk3 = plot(yvalues,  Curve6(3, :), '-', 'LineWidth', linewith{3}, 'Color', linecolor{3});
+nk4 = plot(yvalues,  Curve6(4, :), '-', 'LineWidth', linewith{4}, 'Color', linecolor{4});
+nk5 = plot(yvalues,  Curve6(5, :), '-', 'LineWidth', linewith{5}, 'Color', linecolor{5});
+nk6 = plot(yvalues,  Curve6(6, :), '-', 'LineWidth', linewith{6}, 'Color', linecolor{6});
 hold off;
 box on;
 xlabel('normalized $y$ values', 'Interpreter','latex');
@@ -267,8 +268,10 @@ lgd = legend([nk1, nk2, nk3, nk4, nk5, nk6], {'$\gamma_1$', '$\gamma_2$', '$\gam
     'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off');
 lgd.Layout.Tile = 'South';
 pause(0.1); 
-exportgraphics(tfig, [paper_figure_dir, dataName, '_Jy_estimated_curve.pdf'], 'ContentType', 'Vector');
 
+if ( pcnt == length(params))
+exportgraphics(tfig, [paper_figure_dir, dataName, '_Jy_estimated_curve_', append_info, '.pdf'], 'ContentType', 'Vector');
+end
 
 
 if ~isnan(size_of_final_image(1))
@@ -285,16 +288,18 @@ image_template = imresize(image_template, size_of_final_image);
 rectified_img = imresize(rectified_img, size_of_final_image);
 
 
-rsfig = figure('Name', 'RS Image', 'Position', [700, 500, 500, size_of_final_image(2)]); 
+close all;
+
+rsfig = figure('Name', 'RS Image', 'Position', [700, 500, 500, size_of_final_image(2)]); ax = gca;
 imshow(image_rollingshutter); pause(0.1); hold on;
-scatter(scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'r'); hold off;
+scatter(ax, scale_r*keypoints_rollingshutter(1, :), scale_r*keypoints_rollingshutter(2, :), '.', 'g'); hold off; pause(0.1);
 exportgraphics(rsfig, [paper_figure_dir, dataName, '_rs_img.pdf'], 'ContentType', 'vector');
 % imwrite(image_rollingshutter, [paper_figure_dir, dataName, '_rs_img.png']);
 
 
-ttfig = figure('Name', 'Template Image', 'Position', [0,  0, 500, size_of_final_image(2)]); 
+ttfig = figure('Name', 'Template Image', 'Position', [0,  0, 500, size_of_final_image(2)]);  ax = gca;
 imshow(image_template); pause(0.1); hold on;
-scatter(scale_t*keypoints_template(1, :), scale_t*keypoints_template(2, :), '.', 'r'); hold off;
+scatter(ax, scale_t*keypoints_template(1, :), scale_t*keypoints_template(2, :), '.', 'g'); hold off; pause(0.1);
 exportgraphics(ttfig, [paper_figure_dir, dataName, '_template.pdf'], 'ContentType', 'vector');
 % imwrite(image_template, [paper_figure_dir, dataName, '_template.png']);
 
@@ -306,10 +311,10 @@ imwrite(rectified_img, [paper_figure_dir, dataName, '_rect_img_', append_info, '
 
 
 
-if (pcnt == 1)
+if (pcnt == 1 && 1)
 rectified_img_yizhen = imresize(rectified_img_yizhen, [size(rectified_img, 1), size(rectified_img, 2)]);    
 rectfig_yizhen = figure('Name', 'rectified Image Yizhen',  'Position', [1400, 0, 500, size_of_final_image(2)]);
-imshow(rectified_img_yizhen); pause(0.1);
+imshow(rectified_img_yizhen, 'Interpolation','bilinear'); pause(0.1);
 imwrite(rectified_img_yizhen, [paper_figure_dir, dataName, '_rect_img_', 'Yizhen', '.png']);
 end      
 

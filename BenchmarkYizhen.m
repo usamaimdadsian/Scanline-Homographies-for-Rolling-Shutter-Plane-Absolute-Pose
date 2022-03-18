@@ -19,34 +19,41 @@ classdef BenchmarkYizhen < handle
         % poses -  for each scanline, format [N x 3]
         % landmarkHomography - [N x 1] cell array of landmark homographies
         % status: boolean indicating is rectification completed or not
-        
-        function [rectified_img, poses, landmarkHomography, status] = SolveImageRectification(this, keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, image_rollingshutter, template_image, landmarks_rollingshutter)
+
+
+        function [rectified_img,  poses] = SolveImageRectification (this, keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, image_rollingshutter, template_type)
+            if ~exist('template_type', 'var') || (exist('template_type', 'var') && isempty(template_type))
+                template_type = 'image';    %% image = global-shutter-image,     object = Euclidean object
+            end
+            
             addpath(genpath('./BenchmarkYizhen'));
             
             close all;
+
+            poses = cell(0);
             
-            yRS = YizhenRS(keypoints_template, keypoints_rollingshutter);
+            rectified_img = TwoViewRectificationProcedure (keypoints_rollingshutter, keypoints_template, image_rollingshutter, [], calibration_rollingshutter);
             
-            yRS.set_template_image(template_image);
-            yRS.set_RS_image(image_rollingshutter);
-            yRS.set_intrinsics(calibration_rollingshutter);
-            yRS.set_additional_landmarks(landmarks_rollingshutter);
-            
-            [status] = yRS.rectify();
-            
-            if(status)
-                
-                [rectified_img] = yRS.get_rectified_image();            
-                [poses] = yRS.get_landmark_poses();
-                [landmarkHomography] = yRS.get_landmark_homographies();
-                
-            else
-                
-                warning('Yizhen''s method for RS image rectification failed!');
-                
+            [rsy, rsx, ch] = size(image_rollingshutter);
+
+            rectified_img = imresize(rectified_img, [rsy, rsx]);
+
+            close all;
+
+        end
+
+
+
+
+        function [rectified_landmarks,  poses] = SolveLandmarkRectification (this, keypoints_rollingshutter, keypoints_template, calibration_rollingshutter, calibration_template, landmarks_rollingshutter, template_type)
+            if ~exist('template_type', 'var') || (exist('template_type', 'var') && isempty(template_type))
+                template_type = 'image';    %% image = global-shutter-image,     object = Euclidean object
             end
-            
-        end       
+
+            addpath(genpath('./BenchmarkYizhen'));
+
+
+        end
         
         
     end    

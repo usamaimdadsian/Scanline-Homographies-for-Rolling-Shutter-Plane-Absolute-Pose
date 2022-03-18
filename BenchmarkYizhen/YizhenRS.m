@@ -27,8 +27,8 @@ classdef YizhenRS < handle
             assert((obj.isRSImageAvailable && obj.isTemplateImageAvailable && obj.isKeyPointsSet && obj.isIntrinsicsSet )...
                 ,'Either the keypoints or the RS/template images or intrinsics have not been set. To check usage, hit: "help YizhenRS" ');
             
-            [obj.rectifiedImage, obj.landmarkPoses, obj.landmark_homography] = TwoViewRectification(obj.keypoints_rs, obj.keypoints_template,...
-                                                                            obj.image_rs, obj.image_template, obj.intrinsics, obj.additional_landmarks_RS);            
+            [obj.rectifiedImage] = TwoViewRectification(obj.keypoints_rs, obj.keypoints_template,...
+                                                                            obj.image_rs, [], obj.intrinsics);            
                                                                         
             isDone=true;
         end
