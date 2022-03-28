@@ -75,6 +75,7 @@ params(10).param_num_control_points = [5, 5, 5, 5, 5];
 % pcnt = [1, 2, 3]
 RMSE_rot_arr = [];
 RMSE_pos_arr = [];
+RMSE_JxptFitness_arr = [];
 
 exp_curve_names = {};
 
@@ -116,6 +117,7 @@ cd(old_dir);
 
 RMSE_rot_arr = [RMSE_rot_arr;   zeros(1, length(frame_names))];
 RMSE_pos_arr = [RMSE_pos_arr;   zeros(1, length(frame_names))];
+RMSE_JxptFitness_arr = [RMSE_JxptFitness_arr;  zeros(1, length(frame_names))];
 
 
 for ii = 1 : length(frame_names)
@@ -160,6 +162,8 @@ for ii = 1 : length(frame_names)
     
     
     [RMSE_rot, RMSE_pos] = internal_packages.TrajectoryError.RelativePoseError (poses, gt_poses);
+    %[RMSE_rot, RMSE_pos] = internal_packages.TrajectoryError.AbsoluteTrajectoryErrorByFirst (poses, gt_poses);
+
     RMSE_rot_arr(end, ii) = RMSE_rot;
     RMSE_pos_arr(end, ii) = RMSE_pos;
     
@@ -177,6 +181,7 @@ for ii = 1 : length(frame_names)
     title(filename);
     pause(0.1);
     
+    RMSE_JxptFitness_arr(end, ii) = sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2));
     
     
     figure('Name', append_info, 'Position', [0, 0, 1600, 600]);
@@ -255,7 +260,7 @@ close all;
 fontSize2 = 8;
 
 figure('Name', 'Image rectification', 'Position', [0, 800, 1280, 300]);
-tfig = tiledlayout(1, 2, 'TileSpacing', 'compact');
+tfig = tiledlayout(1,3, 'TileSpacing', 'compact');
 
 linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
 linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
@@ -271,7 +276,7 @@ end
 hold off; grid off; box on;
 ylabel(ax1, 'Rotation RMSE');
 ax1.XLim(1) = 1;
-set(gca, 'YScale', 'log');
+%set(gca, 'YScale', 'log');
 
 
 ax2 = nexttile;
@@ -282,7 +287,18 @@ end
 hold off; grid off; box on;
 ylabel(ax2, 'Translation RMSE');
 ax2.XLim(1) = 1;
-set(gca, 'YScale', 'log');
+%set(gca, 'YScale', 'log');
+
+ax3 = nexttile;
+hold on;
+for ii = 1 : size(RMSE_JxptFitness_arr, 1)
+plot(RMSE_JxptFitness_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
+end
+hold off; grid off; box on;
+ylabel(ax3, 'Fitness of J(y)');
+ax3.XLim(1) = 1;
+%set(gca, 'YScale', 'log');
+
 
 lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off');
 lgd.Layout.Tile = 'South';

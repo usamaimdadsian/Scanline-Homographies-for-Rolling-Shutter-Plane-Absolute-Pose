@@ -81,6 +81,7 @@ params(14).param_num_control_points = [5, 5, 5, 5, 5]+4;
 
 RMSE_rot_arr  = zeros(length(data_options), length(params));
 RMSE_pos_arr = zeros(length(data_options), length(params));
+RMSE_JxptFitness_arr = zeros(length(data_options), length(params));
 
 
 exp_curve_names = {};
@@ -243,11 +244,15 @@ end
 %     gt_poses{ii} = swapT*gt_poses{ii};
 % end
 
+% [lmk_RMSE_rot, lmk_RMSE_pos] = internal_packages.TrajectoryError.AbsoluteTrajectoryErrorByFirst(lmk_poses, gt_lmk_poses);
+% [RMSE_rot, RMSE_pos] = internal_packages.TrajectoryError.AbsoluteTrajectoryErrorByFirst(poses, gt_poses);
+
 [lmk_RMSE_rot, lmk_RMSE_pos] = internal_packages.TrajectoryError.RelativePoseError (lmk_poses, gt_lmk_poses);
 [RMSE_rot, RMSE_pos] = internal_packages.TrajectoryError.RelativePoseError (poses, gt_poses);
 
 RMSE_rot_arr(dtc, pcnt) = RMSE_rot;
 RMSE_pos_arr(dtc, pcnt) = RMSE_pos;
+
 
 
 translation_estimated = zeros(size(gt_poses,2), 3);
@@ -297,11 +302,13 @@ for k = 1 : length(RSPAPP.param_num_control_points)
 end
 if strcmp(RSPAPP.param_paramterization_type, 'Polynomial')
     append_info = ['polynomial_p', pstr];
+    append_name_info = ['p', pstr];
 end
 if strcmp(RSPAPP.param_paramterization_type, 'BSpline')
     append_info = ['bspline_p', pstr, '_c', cstr];
+    append_name_info = ['p', pstr, '_c', cstr];
 end
-exp_curve_names = [exp_curve_names,  ['p', pstr, '\_c', cstr]];
+exp_curve_names = [exp_curve_names,  append_name_info];
 
 
 
@@ -327,6 +334,8 @@ title(sprintf('RMSE = %f',  sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2))));
 xlabel('x'); ylabel('y');
 pause(0.1);
 
+
+RMSE_JxptFitness_arr(dtc, pcnt) = sqrt(dvnorm * dvnorm/ size(template_Jxpts, 2));
 
 %%% To be used with MATLAB 2019 or later
 % % % % figure('Name', append_info, 'Position', [0, 0, 1900, 600]);
@@ -395,117 +404,201 @@ RMSE_pos_arr
 RMSE_rot_arr
 
 
-
-
-
-%%
-close all;
-
-
-datasetNames = {'RS1', 'RS2', 'RS3'};
-
-fontSize1 = 8;
-
-fontSize2 = 8;
-
-fontSize3 = 6;
-
-figure('Name', 'Image rectification', 'Position', [0, 800, 1250, 300]);
-tfig = tiledlayout(2, 1, 'TileSpacing', 'compact');
-
-linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
-linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
-linecolor = {'#FF0000', '#00FF00',  '#0000FF', '#00FFFF', '#FFFF00', ...
-                      '#A2142F', '#77AC30',  '#0072BD', '#4DBEEE', '#EDB120'};
-linecolor = linecolor([1, 10, 4]);
-
-
-ax1 = nexttile;
-hold on;
-for ii = 1 : size(RMSE_rot_arr, 1)
-plot(RMSE_rot_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
-end
-hold off; grid on; box on;
-ylabel(ax1, 'Rotation RMSE', 'FontSize',fontSize1);
-ax1.XLim(1) = 1;
-
-lgd1 = legend(datasetNames, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off', 'Location','southeast');
-
-ax1.FontSize = fontSize3;
-xticks(1 : length(params));
-xticklabels(exp_curve_names);
-
-ax2 = nexttile;
-hold on;
-for ii = 1 : size(RMSE_pos_arr, 1)
-plot(RMSE_pos_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
-end
-hold off; grid on; box on;
-ylabel(ax2, 'Translation RMSE', 'FontSize',fontSize1);
-ax2.XLim(1) = 1;
-
-lgd2 = legend(datasetNames, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off', 'Location','southeast');
-
-ax2.FontSize = fontSize3;
-xticks(1 : length(params));
-xticklabels(exp_curve_names);
-
-pause(0.1); 
-
-exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_ArbitraryMotionSimulation', '.pdf'], 'ContentType', 'Vector');
-
-return
+RMSE_JxptFitness_arr
 
 
 %%
+if (0)
 
-close all;
-
-
-datasetNames = {'RS1', 'RS2', 'RS3'};
-
-fontSize1 = 6;
-
-fontSize2 = 4;
-
-fontSize3 = 6;
-
-figure('Name', 'Image rectification', 'Position', [0, 800, 1200, 250]);
-tfig = tiledlayout(1, 2, 'TileSpacing', 'compact');
-
-linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
-linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
-linecolor = {'#A2142F', '#77AC30',  '#0072BD', '#4DBEEE', '#EDB120'};
+    close all;
 
 
-ax1 = nexttile;
-hold on;
-bar(RMSE_rot_arr);
-hold off; grid off; box on;
-ylabel(ax1, 'Rotation RMSE', 'FontSize',fontSize1);
-ax1.FontSize = fontSize3;
+    datasetNames = {'RS1', 'RS2', 'RS3'};
+
+    fontSize1 = 8;
+
+    fontSize2 = 8;
+
+    fontSize3 = 6;
+
+    figure('Name', 'Image rectification', 'Position', [0, 800, 1250, 300]);
+    tfig = tiledlayout(2, 1, 'TileSpacing', 'compact');
+
+    linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
+    linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
+    linecolor = {'#FF0000', '#00FF00',  '#0000FF', '#00FFFF', '#FFFF00', ...
+        '#A2142F', '#77AC30',  '#0072BD', '#4DBEEE', '#EDB120'};
+    linecolor = linecolor([1, 10, 4]);
+
+
+    ax1 = nexttile;
+    hold on;
+    for ii = 1 : size(RMSE_rot_arr, 1)
+        plot(RMSE_rot_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
+    end
+    hold off; grid on; box on;
+    ylabel(ax1, 'Rotation RMSE', 'FontSize',fontSize1);
+    ax1.XLim(1) = 1;
+
+    lgd1 = legend(datasetNames, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off', 'Location','southeast');
+
+    ax1.FontSize = fontSize3;
+    xticks(1 : length(params));
+    xticklabels(exp_curve_names);
+
+    ax2 = nexttile;
+    hold on;
+    for ii = 1 : size(RMSE_pos_arr, 1)
+        plot(RMSE_pos_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
+    end
+    hold off; grid on; box on;
+    ylabel(ax2, 'Translation RMSE', 'FontSize',fontSize1);
+    ax2.XLim(1) = 1;
+
+    lgd2 = legend(datasetNames, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off', 'Location','southeast');
+
+    ax2.FontSize = fontSize3;
+    xticks(1 : length(params));
+    xticklabels(exp_curve_names);
+
+    pause(0.1);
+
+    exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_ArbitraryMotionSimulation', '.pdf'], 'ContentType', 'Vector');
+
+    return
+end
+
+%%
+
+if (1)
+
+    close all;
+
+
+    datasetNames = {'RS1', 'RS2', 'RS3'};
+
+    fontSize1 = 8;
+
+    fontSize2 = 7;
+
+    fontSize3 = 8;
+
+    figure('Name', 'Image rectification', 'Position', [0, 800, 800, 250]);
+    tfig = tiledlayout(1, 3, 'TileSpacing', 'compact');
+
+    linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
+    linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
+    linecolor = {'#A2142F', '#77AC30',  '#0072BD', '#4DBEEE', '#EDB120'};
+
+    colors = colorcube(size(RMSE_rot_arr,2));
+
+    ax1 = nexttile;
+    hold on;
+    b1 = bar(RMSE_rot_arr, 'FaceColor', 'flat');
+    hold off; grid off; box on;
+    for k = 1:size(RMSE_rot_arr,2)
+    b1(k).CData = colors(k, :);
+    end
+    ylabel(ax1, 'Rotation RMSE', 'FontSize',fontSize1);
+    ax1.FontSize = fontSize3;
+    xticks(1 : length(data_options));
+    xticklabels(datasetNames);
+
+
+    ax2 = nexttile;
+    hold on;
+    b2 = bar(RMSE_pos_arr, 'FaceColor', 'flat');
+    hold off; grid off; box on;
+    for k = 1:size(RMSE_pos_arr,2)
+        b2(k).CData = colors(k, :);
+    end
+    ylabel(ax2, 'Translation RMSE', 'FontSize',fontSize1);
+    ax2.FontSize = fontSize3;
+    xticks(1 : length(data_options));
+    xticklabels(datasetNames);
+
+
+    ax3 = nexttile;
+    hold on;
+    b2 = bar(RMSE_JxptFitness_arr, 'FaceColor', 'flat');
+    hold off; grid off; box on;
+    for k = 1:size(RMSE_JxptFitness_arr,2)
+        b2(k).CData = colors(k, :);
+    end
+    %ylabel(ax3, '$\mathbf{J}(y)$ Fitness', 'Interpreter','latex', 'FontSize',fontSize1);
+    ylabel(ax3, 'Fitness of J(y)', 'FontSize',fontSize1);
+    ax3.FontSize = fontSize3;
+    xticks(1 : length(data_options));
+    xticklabels(datasetNames);
+
+%     lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'box', 'off', 'Orientation','Horizontal','NumColumns',3);
+%     lgd.Layout.Tile = 'south';
+
+    lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'box', 'off', 'Orientation','Vertical');
+    lgd.Layout.Tile = 'east';
+
+
+    pause(0.1);
+
+
+    exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_ArbitraryMotionSimulation', '.pdf'], 'ContentType', 'Vector');
+
+    return;
+
+end
 
 
 
-ax2 = nexttile;
-hold on;
-bar(RMSE_pos_arr);
-hold off; grid off; box on;
-ylabel(ax2, 'Translation RMSE', 'FontSize',fontSize1);
-ax2.FontSize = fontSize3;
+if (1)
+    close all;
+
+    linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
+    linewith = {1.2, 1.2, 1.2, 1.2, 1.2,     2, 2, 2, 2, 2};
+    linecolor = {'#A2142F', '#77AC30',  '#0072BD', '#4DBEEE', '#EDB120'};
+
+    Trans = [];
+    gtTrans = [];
+    for ii = 1 : length(poses)
+        Trans = [Trans,  poses{ii}(1:3, 4)];
+        gtTrans = [gtTrans, gt_poses{ii}(1:3, 4)];
+    end
+
+    figure('Name', 'Translation Error', 'Position', [0, 0, 500, 200]);
+    tfig = tiledlayout(1, 3, 'TileSpacing', 'compact');
+
+    ax1 = nexttile;
+    hold on;
+    plot(Trans(1, :), linespec{1}, 'LineWidth', linewith{1});
+    plot(gtTrans(1, :), linespec{2}, 'LineWidth', linewith{2});
+    hold off; box on;
+    ylabel('X axis', 'Fontsize', 8);
+    xlabel('scanline indices', 'Fontsize', 8)
+
+    ax2 = nexttile;
+    hold on;
+    plot(Trans(2, :), linespec{1}, 'LineWidth', linewith{1});
+    plot(gtTrans(2, :), linespec{2}, 'LineWidth', linewith{2});
+    hold off; box on;
+    ylabel('Y axis', 'Fontsize', 8);
+    xlabel('scanline indices', 'Fontsize', 8)
+
+    ax3 = nexttile;
+    hold on;
+    plot(Trans(3, :), linespec{1}, 'LineWidth', linewith{1});
+    plot(gtTrans(3, :), linespec{2}, 'LineWidth', linewith{2});
+    hold off; box on;
+    ylabel('Z axis', 'Fontsize', 8);
+    xlabel('scanline indices', 'Fontsize', 8)
 
 
+    lgd = legend({'Estimated', 'Ground-truth'}, 'FontSize', 8,'Interpreter','latex', 'box', 'off', 'Orientation','horizontal');
+    lgd.Layout.Tile = 'south';   
 
-lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off');
-lgd.Layout.Tile = 'South';
-pause(0.1); 
+    exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_ArbitraryMotionSimulation_XYZ', '.pdf'], 'ContentType', 'Vector');
 
-
-exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_ArbitraryMotionSimulation', '.pdf'], 'ContentType', 'Vector');
-
+end
 
 
-return;
 
 
 
