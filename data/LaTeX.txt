@@ -1,0 +1,25 @@
+\subsection{Image Rectification}	
+
+We provide additional examples on RS image rectification in Fig.~\ref{label. rs image rectification examples},
+using the scanline homography parameterizations p11122 and p22222-c44444.
+Since existing researches are not dedicated to handle a GS image template explicitly,
+we use the RS plane relative pose solution \cite{lao2020rolling} based on a constant velocity model as the benchmark algorithm where the template is considered as an RS image in \cite{lao2020rolling}.
+
+
+We see that a specific absolute pose problem which handles a GS image template is useful, in particular when the correspondences are sparse, \textit{e.g.,}~in the last two rows.
+With that being said, while a simple polynomial p11122 seems to be sufficient in most cases, an advanced B-spline parameterization can handle larger distortions, \textit{e.g.,}~the wooden floor in the first row rectified by p22222-c44444.
+
+
+
+\subsection{Handling Arbitrary Rolling-Shutter Motions}
+To test our method against stronger RS effect caused by motion that violates constant velocity assumption, we provide synthetic data and validate as follows:
+
+\noindent\textbf{Dataset generation:} Three different textures, TS1, TS2, and TS3, are mapped to a densely sampled planar surface, as shown in Fig. xxx, resulting in a trivial bijective map from the surface to the texture. Arbitrary smooth motions, generated in $\mathbb{R}^3$ using Bézier curves, are used to transform this template plane. A sequence of images depicting such motions are combined by each scanline to arrive at the final synthetic RS image\footnote{Script to simulate the synthetic scene is given here: https://github.com/xxxx-xxxxxx-xxx (dummy link)}. 
+
+
+\noindent\textbf{Pose Estimation}
+For the three textures, the best translational pose estimation results on the entire image are obtained for the parameterisation p11111, p11122, p11111 respectively. The detailed RPE for landmarks and images are given in Fig. xxx. Qualitatively, the pose estimation results are strongly accurate for motion along X and Y axis, while some loss of accuracy remains for the motion along Z-axis. However, this does not reflect in image rectification accuracy. 
+
+
+\noindent\textbf{Image rectification.}
+The rectified images are highly accurate and qualitatively, does a very convincing job of mapping straight-lines to straight-lines. All results are shown in Fig. xxxx. 

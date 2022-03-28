@@ -148,7 +148,7 @@ classdef RollingShutterPlaneAbsolutePoseProblem < handle
                     plane_homographies{ii} = calibration_rollingshutter * EuclideanH * inv(calibration_template);
                 end
                 
-                anchor_idx = 1;
+                anchor_idx = round(median(keypoints_rollingshutter(2, :)));
                 rectified_landmarks = zeros(2, rs_pts_size);
                 H0 = plane_homographies{anchor_idx};
                 for ii = 1 : rs_pts_size
