@@ -306,7 +306,7 @@ if strcmp(RSPAPP.param_paramterization_type, 'Polynomial')
 end
 if strcmp(RSPAPP.param_paramterization_type, 'BSpline')
     append_info = ['bspline_p', pstr, '_c', cstr];
-    append_name_info = ['p', pstr, '_c', cstr];
+    append_name_info = ['p', pstr, '\_c', cstr];
 end
 exp_curve_names = [exp_curve_names,  append_name_info];
 
@@ -407,66 +407,7 @@ RMSE_rot_arr
 RMSE_JxptFitness_arr
 
 
-%%
-if (0)
 
-    close all;
-
-
-    datasetNames = {'RS1', 'RS2', 'RS3'};
-
-    fontSize1 = 8;
-
-    fontSize2 = 8;
-
-    fontSize3 = 6;
-
-    figure('Name', 'Image rectification', 'Position', [0, 800, 1250, 300]);
-    tfig = tiledlayout(2, 1, 'TileSpacing', 'compact');
-
-    linespec = {'.-', '.-', '.-', '.-', '.-',     'o--', 'o--', 'o--', 'o--', 'o--'};
-    linewith = {1.5, 1.5, 1.5, 1.5, 1.5,     2, 2, 2, 2, 2};
-    linecolor = {'#FF0000', '#00FF00',  '#0000FF', '#00FFFF', '#FFFF00', ...
-        '#A2142F', '#77AC30',  '#0072BD', '#4DBEEE', '#EDB120'};
-    linecolor = linecolor([1, 10, 4]);
-
-
-    ax1 = nexttile;
-    hold on;
-    for ii = 1 : size(RMSE_rot_arr, 1)
-        plot(RMSE_rot_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
-    end
-    hold off; grid on; box on;
-    ylabel(ax1, 'Rotation RMSE', 'FontSize',fontSize1);
-    ax1.XLim(1) = 1;
-
-    lgd1 = legend(datasetNames, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off', 'Location','southeast');
-
-    ax1.FontSize = fontSize3;
-    xticks(1 : length(params));
-    xticklabels(exp_curve_names);
-
-    ax2 = nexttile;
-    hold on;
-    for ii = 1 : size(RMSE_pos_arr, 1)
-        plot(RMSE_pos_arr(ii, :), linespec{ii}, 'LineWidth', linewith{ii}, 'Color', linecolor{ii});
-    end
-    hold off; grid on; box on;
-    ylabel(ax2, 'Translation RMSE', 'FontSize',fontSize1);
-    ax2.XLim(1) = 1;
-
-    lgd2 = legend(datasetNames, 'FontSize',fontSize2,'Interpreter','latex', 'Orientation', 'Horizontal', 'box', 'off', 'Location','southeast');
-
-    ax2.FontSize = fontSize3;
-    xticks(1 : length(params));
-    xticklabels(exp_curve_names);
-
-    pause(0.1);
-
-    exportgraphics(tfig, [paper_figure_dir, 'ScanlinePoseError_ArbitraryMotionSimulation', '.pdf'], 'ContentType', 'Vector');
-
-    return
-end
 
 %%
 
@@ -531,10 +472,8 @@ if (1)
     xticks(1 : length(data_options));
     xticklabels(datasetNames);
 
-%     lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'box', 'off', 'Orientation','Horizontal','NumColumns',3);
-%     lgd.Layout.Tile = 'south';
+    lgd = legend(exp_curve_names, 'FontSize',fontSize2,  'Orientation','Vertical', 'box', 'off');
 
-    lgd = legend(exp_curve_names, 'FontSize',fontSize2,'Interpreter','latex', 'box', 'off', 'Orientation','Vertical');
     lgd.Layout.Tile = 'east';
 
 
