@@ -2,7 +2,7 @@ clear all
 close all
 clc
 
-
+addpath(genpath('./RollingShutterPlaneAbsolutePose'));
 
 Xrange = 1 :  0.2 : 6;
 Yrange = 1 : 2 : 10;

@@ -2,6 +2,7 @@ clear all
 close all
 clc
 
+addpath(genpath('./RollingShutterPlaneAbsolutePose'));
 
 size_of_final_image = [NaN, 400];
 
