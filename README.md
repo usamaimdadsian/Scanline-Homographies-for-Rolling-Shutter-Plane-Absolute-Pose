@@ -1,6 +1,6 @@
 # Planar Scanline-Homography
 
-MATLAB code for the article [*Scanline Homographies for Rolling-Shutter Plane Absolute Pose*](http://igt.ip.uca.fr/encov/publications/pubfiles/2022_Bai_etal_CVPR_scanline.pdf)
+MATLAB code for the article [*Scanline Homographies for Rolling-Shutter Plane Absolute Pose*](https://openaccess.thecvf.com/content/CVPR2022/html/Bai_Scanline_Homographies_for_Rolling-Shutter_Plane_Absolute_Pose_CVPR_2022_paper.html)
 
 Authors: Fang Bai (fang.bai@yahoo.com), Agniva Sengupta (i.agniva@gmail.com), Adrien Bartoli (adrien.bartoli@gmail.com)
 
@@ -11,15 +11,15 @@ Accepted at: IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVP
 ## Reference
 
 ```
-@inproceedings{baietal2022scanline,
-	title={Scanline Homographies for Rolling-Shutter Plane Absolute Pose}, 
-    author={Bai, Fang and Sengupta, Agniva and Bartoli, Adrien},	
-	booktitle={Proceedings of the IEEE conference on computer vision and pattern recognition}, 
-	year={2022}
+@InProceedings{Bai_2022_CVPR,
+    author    = {Bai, Fang and Sengupta, Agniva and Bartoli, Adrien},
+    title     = {Scanline Homographies for Rolling-Shutter Plane Absolute Pose},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+    month     = {June},
+    year      = {2022},
+    pages     = {8993-9002}
 }
 ```
-
-Draft: http://igt.ip.uca.fr/encov/publications/pubfiles/2022_Bai_etal_CVPR_scanline.pdf
 
 ---
 ## License
