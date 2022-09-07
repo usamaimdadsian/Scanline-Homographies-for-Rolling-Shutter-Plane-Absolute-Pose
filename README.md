@@ -8,6 +8,7 @@ Accepted at: IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVP
 
 
 ---
+
 ## Reference
 
 ```
@@ -22,6 +23,7 @@ Accepted at: IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVP
 ```
 
 ---
+
 ## Contributions
 
 Adrien Bartoli originates the idea of scanline-homography along with its estimation by B-Spline and polynomial paramterizations.
@@ -30,6 +32,7 @@ Agniva Sengupta makes substantial contributions on the experiment part in the in
 The article is written by Fang Bai.
 
 ---
+
 ## License
 
 The code is relased under the [Apache License](./LICENSE).
