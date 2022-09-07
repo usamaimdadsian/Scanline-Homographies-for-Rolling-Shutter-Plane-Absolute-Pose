@@ -26,6 +26,8 @@ Accepted at: IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVP
 
 ## Contributions
 
+All the authors have been indicated as equal contributors to this work.
+
 Adrien Bartoli originates the idea of scanline-homography along with its estimation by B-Spline and polynomial paramterizations.
 Fang Bai develops the theory of fundamental homography equation, the QR form to parameterize plane-homographies, and the alternation method for pose estimation.
 Agniva Sengupta makes substantial contributions on the experiment part in the initial submission.
